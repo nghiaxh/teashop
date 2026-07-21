@@ -1,0 +1,43 @@
+services:
+  teashop-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - teashop-server
+    networks:
+      - teashop-network
+
+  teashop-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGODB_URI=mongodb://teashop-database:27017/teashop
+      - SESSION_SECRET=teashop-secret-key-2026
+      - PORT=5000
+      - NODE_ENV=production
+    depends_on:
+      - teashop-database
+    networks:
+      - teashop-network
+
+  teashop-database:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - teashop-network
+
+volumes:
+  mongo-data:
+
+networks:
+  teashop-network:
+    driver: bridge
