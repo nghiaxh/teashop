@@ -2,6 +2,19 @@
 
 This document describes the4 known bugs in the TeaShop application and how to fix them.
 
+## Branch Structure
+
+| Branch | Description |
+|--------|-------------|
+| `main` | Full codebase with4 intentional bugs (see below) |
+| `bugs-fixed` | Same as `main` + all 4 bugs fixed |
+
+To switch between them:
+```bash
+git checkout main          # buggy version
+git checkout bugs-fixed    # fixed version
+```
+
 ---
 
 ## CR01 — Sai tổng tiền đơn hàng khi có topping

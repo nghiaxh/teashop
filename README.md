@@ -53,6 +53,7 @@ Access:
 ```bash
 cd server
 npm install
+cp ../.env.example ../.env   # edit with your values
 npm run dev
 ```
 
