@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -11,6 +12,10 @@ import {
   Users,
   CalendarCheck,
   TrendUp,
+  CaretLeft,
+  CaretRight,
+  SignOut,
+  User,
   type IconProps,
 } from '@phosphor-icons/react';
 import type { ComponentType } from 'react';
@@ -19,92 +24,133 @@ interface SidebarLinkProps {
   to: string;
   label: string;
   icon: ComponentType<IconProps>;
+  collapsed: boolean;
+  end?: boolean;
   onClose?: () => void;
 }
 
-function SidebarLink({ to, label, icon: Icon, onClose }: SidebarLinkProps) {
-  return (
+function SidebarLink({ to, label, icon: Icon, collapsed, end, onClose }: SidebarLinkProps) {
+  const link = (
     <NavLink
       to={to}
-      end={to === '/'}
+      end={end}
       onClick={onClose}
       className={({ isActive }) =>
-        `relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+        `relative flex items-center gap-3 rounded-xl text-sm focus-visible:outline-none transition-all duration-200 ${
+          collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'
+        } ${
           isActive
-            ? 'bg-primary/10 text-primary font-medium'
-            : 'text-foreground/70 hover:bg-content2 hover:text-foreground'
+            ? 'bg-foreground text-primary-foreground font-medium'
+            : 'text-foreground/60 hover:bg-content2 hover:text-foreground'
         }`
       }
     >
       {({ isActive }) => (
         <>
-          {isActive && (
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-primary" />
+          <Icon size={18} weight={isActive ? 'fill' : 'regular'} />
+          {!collapsed && (
+            <span className="whitespace-nowrap overflow-hidden">{label}</span>
           )}
-          <Icon size={18} weight="regular" />
-          <span>{label}</span>
         </>
       )}
     </NavLink>
   );
+
+  if (collapsed) {
+    return <div title={label}>{link}</div>;
+  }
+
+  return link;
 }
 
 const staffLinks = [
-  { to: '/', label: 'Dashboard', icon: House },
+  { to: '/', label: 'Bảng điều khiển', icon: House, end: true },
   { to: '/orders/new', label: 'Tạo đơn hàng', icon: PlusCircle },
   { to: '/orders/history', label: 'Lịch sử đơn', icon: ClockCounterClockwise },
   { to: '/attendance/history', label: 'Lịch sử chấm công', icon: Clock },
+  { to: '/profile', label: 'Thông tin', icon: User },
 ];
 
 const managerLinks = [
-  { to: '/manager', label: 'Tổng quan', icon: ChartBar },
+  { to: '/manager', label: 'Tổng quan', icon: ChartBar, end: true },
   { to: '/manager/menu', label: 'Quản lý Menu', icon: BookOpen },
   { to: '/manager/inventory', label: 'Quản lý Kho', icon: Package },
   { to: '/manager/accounts', label: 'Quản lý Nhân viên', icon: Users },
   { to: '/manager/attendance', label: 'Quản lý Chấm công', icon: CalendarCheck },
   { to: '/manager/reports', label: 'Báo cáo', icon: TrendUp },
+  { to: '/profile', label: 'Thông tin', icon: User },
 ];
 
 export default function Sidebar({ onClose }: { onClose?: () => void }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isManager = user?.role === 'manager';
+  const [collapsed, setCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', String(collapsed));
+  }, [collapsed]);
 
   return (
-    <aside className="w-60 min-h-screen bg-white border-r border-divider flex flex-col">
-      <div className="p-5 border-b border-content3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm shadow-primary/20">
-            <span className="text-white font-bold text-sm">T</span>
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-foreground tracking-tight">TeaShop</h1>
-            <p className="text-[10px] text-foreground/50 uppercase tracking-wider">POS System</p>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 p-3 space-y-1">
-        <p className="text-[10px] uppercase tracking-wider text-foreground/40 font-semibold px-3 pt-2 pb-1">
-          Staff
-        </p>
-        {staffLinks.map((link) => (
-          <SidebarLink key={link.to} {...link} onClose={onClose} />
-        ))}
-
-        {isManager && (
+    <aside
+      style={{ width: collapsed ? 72 : 240 }}
+      className="h-screen bg-content1 border-r border-divider flex flex-col overflow-hidden transition-[width] duration-250 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+    >
+      <nav className="flex-1 px-2 pt-4 pb-2 space-y-0.5 overflow-y-auto min-h-0">
+        {isManager ? (
           <>
-            <p className="text-[10px] uppercase tracking-wider text-foreground/40 font-semibold px-3 pt-4 pb-1">
-              Manager
-            </p>
             {managerLinks.map((link) => (
-              <SidebarLink key={link.to} {...link} onClose={onClose} />
+              <SidebarLink key={link.to} {...link} collapsed={collapsed} onClose={onClose} />
             ))}
+            <div className="pt-1 mt-1 border-t border-divider">
+              {staffLinks
+                .filter((link) => link.to !== '/' && link.to !== '/orders/new' && link.to !== '/profile')
+                .map((link) => (
+                  <SidebarLink key={link.to} {...link} collapsed={collapsed} onClose={onClose} />
+                ))}
+            </div>
           </>
+        ) : (
+          staffLinks.map((link) => (
+            <SidebarLink key={link.to} {...link} collapsed={collapsed} onClose={onClose} />
+          ))
         )}
+
+        <div className="pt-1 mt-1 border-t border-divider">
+          {collapsed ? (
+            <div title="Đăng xuất">
+              <button
+                onClick={logout}
+                className="flex items-center justify-center w-full rounded-xl text-sm text-foreground/60 hover:bg-content2 hover:text-foreground transition-all duration-200 cursor-pointer px-2 py-2.5"
+              >
+                <SignOut size={18} weight="regular" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={logout}
+              className="flex items-center gap-3 w-full rounded-xl text-sm text-foreground/60 hover:bg-content2 hover:text-foreground transition-all duration-200 cursor-pointer px-3 py-2.5"
+            >
+              <SignOut size={18} weight="regular" />
+              <span className="whitespace-nowrap overflow-hidden">Đăng xuất</span>
+            </button>
+          )}
+        </div>
       </nav>
 
-      <div className="p-4 border-t border-content3">
-        <p className="text-[10px] text-foreground/30 text-center">v1.0.0</p>
+      <div className={`p-2 border-t border-divider ${collapsed ? 'flex justify-center' : ''}`}>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className={`flex items-center gap-2 rounded-xl text-sm text-foreground/40 hover:text-foreground/70 hover:bg-content2 transition-all duration-200 cursor-pointer ${
+            collapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5 w-full'
+          }`}
+        >
+          {collapsed ? <CaretRight size={16} /> : <CaretLeft size={16} />}
+          {!collapsed && (
+            <span className="whitespace-nowrap overflow-hidden">Thu gọn</span>
+          )}
+        </button>
       </div>
     </aside>
   );
