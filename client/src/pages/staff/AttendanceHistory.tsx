@@ -42,48 +42,50 @@ export default function AttendanceHistory() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Lịch sử chấm công</h2>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-base-content">Lịch sử chấm công</h2>
 
-      <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Ngày</th>
-              <th>Ca</th>
-              <th>Giờ vào</th>
-              <th>Giờ ra</th>
-              <th>Đi trễ</th>
-              <th>Giờ làm</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendances.map((att) => (
-              <tr key={att._id}>
-                <td>{formatDate(att.date)}</td>
-                <td>
-                  <span className={`badge ${att.shift === 'morning' ? 'badge-info' : 'badge-secondary'}`}>
-                    {att.shift === 'morning' ? 'Sáng' : 'Chiều'}
-                  </span>
-                </td>
-                <td>{formatTime(att.checkIn)}</td>
-                <td>{formatTime(att.checkOut)}</td>
-                <td>
-                  {att.isLate ? (
-                    <span className="badge badge-warning">Trễ</span>
-                  ) : (
-                    <span className="badge badge-success">Đúng giờ</span>
-                  )}
-                </td>
-                <td>{att.hoursWorked}h</td>
+      <div className="bg-white rounded-xl border border-base-300 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table table-sm">
+            <thead>
+              <tr>
+                <th className="text-base-content/60">Ngày</th>
+                <th className="text-base-content/60">Ca</th>
+                <th className="text-base-content/60">Giờ vào</th>
+                <th className="text-base-content/60">Giờ ra</th>
+                <th className="text-base-content/60">Đi trễ</th>
+                <th className="text-base-content/60">Giờ làm</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {attendances.map((att) => (
+                <tr key={att._id} className="hover">
+                  <td className="text-sm">{formatDate(att.date)}</td>
+                  <td>
+                    <span className={`badge badge-sm ${att.shift === 'morning' ? 'badge-info' : 'badge-secondary'}`}>
+                      {att.shift === 'morning' ? 'Sáng' : 'Chiều'}
+                    </span>
+                  </td>
+                  <td className="text-sm">{formatTime(att.checkIn)}</td>
+                  <td className="text-sm">{formatTime(att.checkOut)}</td>
+                  <td>
+                    {att.isLate ? (
+                      <span className="badge badge-warning badge-sm">Trễ</span>
+                    ) : (
+                      <span className="badge badge-success badge-sm">Đúng giờ</span>
+                    )}
+                  </td>
+                  <td className="text-sm">{att.hoursWorked}h</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {attendances.length === 0 && (
-        <div className="text-center py-8 text-base-content/60">
+        <div className="text-center py-12 text-base-content/40">
           Chưa có bản ghi chấm công
         </div>
       )}

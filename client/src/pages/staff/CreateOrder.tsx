@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { Product, CategoryType } from '../../types';
+import { MagnifyingGlass, X, Trash } from '@phosphor-icons/react';
 
 interface CartItem {
   product: Product;
@@ -23,6 +24,7 @@ const categoryLabels: Record<CategoryType, string> = {
 
 export default function CreateOrder() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +52,9 @@ export default function CreateOrder() {
   };
 
   const filteredProducts = products.filter(p => {
-    return selectedCategory === 'all' || p.category === selectedCategory;
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
+    return matchSearch && matchCategory;
   });
 
   const handleProductClick = (product: Product) => {
@@ -121,13 +125,28 @@ export default function CreateOrder() {
   }
 
   return (
-    <div className="flex gap-6">
-      <div className="flex-1">
-        <div className="tabs tabs-boxed mb-4">
+    <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 min-w-0">
+        <div className="mb-4">
+          <div className="relative">
+            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm món..."
+              className="input input-bordered w-full pl-9 h-10"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {Object.entries(categoryLabels).map(([key, label]) => (
             <button
               key={key}
-              className={`tab ${selectedCategory === key ? 'tab-active' : ''}`}
+              className={`btn btn-sm whitespace-nowrap ${
+                selectedCategory === key ? 'btn-primary' : 'btn-outline'
+              }`}
               onClick={() => setSelectedCategory(key as CategoryType)}
             >
               {label}
@@ -135,98 +154,113 @@ export default function CreateOrder() {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {filteredProducts.map(product => (
             <div
               key={product._id}
-              className="card bg-base-100 shadow cursor-pointer hover:shadow-lg transition-shadow"
+              className="bg-white rounded-xl border border-base-300 p-3 cursor-pointer hover:border-primary/50 transition-colors"
               onClick={() => handleProductClick(product)}
             >
-              <div className="card-body p-4">
-                <div className="w-full h-24 bg-base-200 rounded flex items-center justify-center mb-2">
-                  <span className="text-3xl">🍵</span>
-                </div>
-                <h3 className="card-title text-sm">{product.name}</h3>
-                <p className="text-primary font-semibold">
-                  {product.price.toLocaleString('vi-VN')}đ
-                </p>
+              <div className="w-full aspect-square bg-base-200 rounded-lg flex items-center justify-center mb-2">
+                <span className="text-3xl">🍵</span>
               </div>
+              <h3 className="text-sm font-medium text-base-content truncate">{product.name}</h3>
+              <p className="text-sm font-semibold text-primary">
+                {product.price.toLocaleString('vi-VN')}đ
+              </p>
             </div>
           ))}
         </div>
-      </div>
 
-      <div className="w-96 bg-base-100 rounded-box shadow p-4 h-fit sticky top-6">
-        <h3 className="text-lg font-bold mb-4">Đơn hàng</h3>
-
-        {cart.length === 0 ? (
-          <p className="text-base-content/60 text-center py-8">
-            Chưa có món nào
-          </p>
-        ) : (
-          <div className="space-y-3 mb-4 max-h-96 overflow-y-auto">
-            {cart.map((item, index) => (
-              <div key={index} className="flex justify-between items-start p-3 bg-base-200 rounded">
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{item.product.name}</p>
-                  <p className="text-xs text-base-content/60">
-                    Size {item.size} | Đường {item.sugarLevel}% | Đá {item.iceLevel}%
-                  </p>
-                  {item.toppings.length > 0 && (
-                    <p className="text-xs text-base-content/60">
-                      Topping: {item.toppings.map(t => t.name).join(', ')}
-                    </p>
-                  )}
-                  <p className="text-xs text-base-content/60">x{item.quantity}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-sm">
-                    {item.itemTotal.toLocaleString('vi-VN')}đ
-                  </p>
-                  <button
-                    className="btn btn-ghost btn-xs text-error"
-                    onClick={() => handleRemoveFromCart(index)}
-                  >
-                    Xóa
-                  </button>
-                </div>
-              </div>
-            ))}
+        {filteredProducts.length === 0 && (
+          <div className="text-center py-12 text-base-content/40">
+            Không tìm thấy sản phẩm
           </div>
         )}
+      </div>
 
-        <div className="divider"></div>
-        <div className="flex justify-between font-bold text-lg">
-          <span>Tổng:</span>
-          <span className="text-primary">{totalAmount.toLocaleString('vi-VN')}đ</span>
-        </div>
-        <button
-          className="btn btn-primary w-full mt-4"
-          onClick={handleCreateOrder}
-          disabled={cart.length === 0 || submitting}
-        >
-          {submitting ? (
-            <span className="loading loading-spinner loading-sm"></span>
+      <div className="w-full lg:w-80 shrink-0">
+        <div className="bg-white rounded-xl border border-base-300 p-4 sticky top-0">
+          <h3 className="font-semibold text-base-content mb-4">Đơn hàng</h3>
+
+          {cart.length === 0 ? (
+            <p className="text-sm text-base-content/40 text-center py-8">
+              Chưa có món nào
+            </p>
           ) : (
-            'Tạo đơn'
+            <div className="space-y-2 mb-4 max-h-80 overflow-y-auto">
+              {cart.map((item, index) => (
+                <div key={index} className="flex justify-between items-start p-2.5 bg-base-200 rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-base-content truncate">{item.product.name}</p>
+                    <p className="text-xs text-base-content/50">
+                      Size {item.size} | Đường {item.sugarLevel}% | Đá {item.iceLevel}%
+                    </p>
+                    {item.toppings.length > 0 && (
+                      <p className="text-xs text-base-content/50">
+                        Topping: {item.toppings.map(t => t.name).join(', ')}
+                      </p>
+                    )}
+                    <p className="text-xs text-base-content/50">x{item.quantity}</p>
+                  </div>
+                  <div className="text-right ml-2">
+                    <p className="text-sm font-semibold text-base-content">
+                      {item.itemTotal.toLocaleString('vi-VN')}đ
+                    </p>
+                    <button
+                      className="text-error hover:text-error/80 mt-0.5"
+                      onClick={() => handleRemoveFromCart(index)}
+                    >
+                      <Trash size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
-        </button>
+
+          <div className="border-t border-base-300 pt-3">
+            <div className="flex justify-between font-semibold text-base-content mb-3">
+              <span>Tổng:</span>
+              <span className="text-primary">{totalAmount.toLocaleString('vi-VN')}đ</span>
+            </div>
+            <button
+              className="btn btn-primary w-full"
+              onClick={handleCreateOrder}
+              disabled={cart.length === 0 || submitting}
+            >
+              {submitting ? (
+                <span className="loading loading-spinner loading-sm"></span>
+              ) : (
+                'Tạo đơn'
+              )}
+            </button>
+          </div>
+        </div>
       </div>
 
       {selectedProduct && (
         <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">{selectedProduct.name}</h3>
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">{selectedProduct.name}</h3>
+              <button
+                className="btn btn-ghost btn-sm btn-square"
+                onClick={() => setSelectedProduct(null)}
+              >
+                <X size={18} />
+              </button>
+            </div>
 
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Size</span>
-              </label>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-base-content mb-2">Size</label>
               <div className="flex gap-2">
                 {(['S', 'M', 'L'] as const).map(size => (
                   <button
                     key={size}
-                    className={`btn ${orderSize === size ? 'btn-primary' : 'btn-outline'}`}
+                    className={`btn btn-sm flex-1 ${
+                      orderSize === size ? 'btn-primary' : 'btn-outline'
+                    }`}
                     onClick={() => setOrderSize(size)}
                   >
                     {size}
@@ -235,9 +269,9 @@ export default function CreateOrder() {
               </div>
             </div>
 
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Đường: {orderSugar}%</span>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-base-content mb-2">
+                Đường: {orderSugar}%
               </label>
               <input
                 type="range"
@@ -246,9 +280,9 @@ export default function CreateOrder() {
                 step="25"
                 value={orderSugar}
                 onChange={(e) => setOrderSugar(parseInt(e.target.value))}
-                className="range range-primary"
+                className="range range-primary range-sm"
               />
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-[10px] text-base-content/40 mt-1">
                 <span>0%</span>
                 <span>25%</span>
                 <span>50%</span>
@@ -257,9 +291,9 @@ export default function CreateOrder() {
               </div>
             </div>
 
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Đá: {orderIce}%</span>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-base-content mb-2">
+                Đá: {orderIce}%
               </label>
               <input
                 type="range"
@@ -268,9 +302,9 @@ export default function CreateOrder() {
                 step="25"
                 value={orderIce}
                 onChange={(e) => setOrderIce(parseInt(e.target.value))}
-                className="range range-primary"
+                className="range range-primary range-sm"
               />
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-[10px] text-base-content/40 mt-1">
                 <span>0%</span>
                 <span>25%</span>
                 <span>50%</span>
@@ -280,13 +314,11 @@ export default function CreateOrder() {
             </div>
 
             {selectedProduct.availableToppings.length > 0 && (
-              <div className="form-control mt-4">
-                <label className="label">
-                  <span className="label-text">Topping</span>
-                </label>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-base-content mb-2">Topping</label>
                 <div className="space-y-2">
                   {selectedProduct.availableToppings.map(topping => (
-                    <label key={topping.name} className="flex items-center gap-2 cursor-pointer">
+                    <label key={topping.name} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-base-200">
                       <input
                         type="checkbox"
                         className="checkbox checkbox-primary checkbox-sm"
@@ -299,28 +331,26 @@ export default function CreateOrder() {
                           }
                         }}
                       />
-                      <span className="text-sm">{topping.name}</span>
-                      <span className="text-xs text-base-content/60">+{topping.price.toLocaleString('vi-VN')}đ</span>
+                      <span className="text-sm flex-1">{topping.name}</span>
+                      <span className="text-xs text-base-content/50">+{topping.price.toLocaleString('vi-VN')}đ</span>
                     </label>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Số lượng</span>
-              </label>
-              <div className="flex items-center gap-2">
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-base-content mb-2">Số lượng</label>
+              <div className="flex items-center gap-3">
                 <button
-                  className="btn btn-sm"
+                  className="btn btn-sm btn-outline"
                   onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
                 >
                   -
                 </button>
-                <span className="font-bold">{orderQuantity}</span>
+                <span className="font-semibold text-lg w-8 text-center">{orderQuantity}</span>
                 <button
-                  className="btn btn-sm"
+                  className="btn btn-sm btn-outline"
                   onClick={() => setOrderQuantity(orderQuantity + 1)}
                 >
                   +

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { Attendance } from '../../types';
+import { X, Pencil } from '@phosphor-icons/react';
 
 export default function AttendanceManagement() {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
@@ -64,93 +65,109 @@ export default function AttendanceManagement() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Quản lý Chấm công</h2>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-base-content">Quản lý Chấm công</h2>
 
-      <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Nhân viên</th>
-              <th>Ngày</th>
-              <th>Ca</th>
-              <th>Giờ vào</th>
-              <th>Giờ ra</th>
-              <th>Đi trễ</th>
-              <th>Giờ làm</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {attendances.map(att => (
-              <tr key={att._id}>
-                <td>{att.userId?.name || 'N/A'}</td>
-                <td>{new Date(att.date).toLocaleDateString('vi-VN')}</td>
-                <td>
-                  <span className={`badge ${att.shift === 'morning' ? 'badge-info' : 'badge-secondary'}`}>
-                    {att.shift === 'morning' ? 'Sáng' : 'Chiều'}
-                  </span>
-                </td>
-                <td>{formatTime(att.checkIn)}</td>
-                <td>{formatTime(att.checkOut)}</td>
-                <td>
-                  {att.isLate ? (
-                    <span className="badge badge-warning">Trễ</span>
-                  ) : (
-                    <span className="badge badge-success">OK</span>
-                  )}
-                </td>
-                <td>{att.hoursWorked}h</td>
-                <td>
-                  <button className="btn btn-ghost btn-xs" onClick={() => startEdit(att)}>
-                    Sửa
-                  </button>
-                </td>
+      <div className="bg-white rounded-xl border border-base-300 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table table-sm">
+            <thead>
+              <tr>
+                <th className="text-base-content/60">Nhân viên</th>
+                <th className="text-base-content/60">Ngày</th>
+                <th className="text-base-content/60">Ca</th>
+                <th className="text-base-content/60">Giờ vào</th>
+                <th className="text-base-content/60">Giờ ra</th>
+                <th className="text-base-content/60">Đi trễ</th>
+                <th className="text-base-content/60">Giờ làm</th>
+                <th className="text-base-content/60">Thao tác</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {attendances.map(att => (
+                <tr key={att._id} className="hover">
+                  <td className="text-sm">{att.userId?.name || 'N/A'}</td>
+                  <td className="text-sm">{new Date(att.date).toLocaleDateString('vi-VN')}</td>
+                  <td>
+                    <span className={`badge badge-sm ${att.shift === 'morning' ? 'badge-info' : 'badge-secondary'}`}>
+                      {att.shift === 'morning' ? 'Sáng' : 'Chiều'}
+                    </span>
+                  </td>
+                  <td className="text-sm">{formatTime(att.checkIn)}</td>
+                  <td className="text-sm">{formatTime(att.checkOut)}</td>
+                  <td>
+                    {att.isLate ? (
+                      <span className="badge badge-warning badge-sm">Trễ</span>
+                    ) : (
+                      <span className="badge badge-success badge-sm">OK</span>
+                    )}
+                  </td>
+                  <td className="text-sm">{att.hoursWorked}h</td>
+                  <td>
+                    <button className="btn btn-ghost btn-xs btn-square" onClick={() => startEdit(att)}>
+                      <Pencil size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {editingAttendance && (
         <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">Chỉnh sửa chấm công</h3>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Ca</span>
-              </label>
-              <select
-                className="select select-bordered"
-                value={editData.shift}
-                onChange={(e) => setEditData({ ...editData, shift: e.target.value as 'morning' | 'afternoon' })}
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">Chỉnh sửa chấm công</h3>
+              <button
+                className="btn btn-ghost btn-sm btn-square"
+                onClick={() => setEditingAttendance(null)}
               >
-                <option value="morning">Sáng</option>
-                <option value="afternoon">Chiều</option>
-              </select>
+                <X size={18} />
+              </button>
             </div>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Giờ vào</span>
-              </label>
-              <input
-                type="datetime-local"
-                className="input input-bordered"
-                value={editData.checkIn}
-                onChange={(e) => setEditData({ ...editData, checkIn: e.target.value })}
-              />
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Ca
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={editData.shift}
+                  onChange={(e) => setEditData({ ...editData, shift: e.target.value as 'morning' | 'afternoon' })}
+                >
+                  <option value="morning">Sáng</option>
+                  <option value="afternoon">Chiều</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Giờ vào
+                </label>
+                <input
+                  type="datetime-local"
+                  className="input input-bordered w-full"
+                  value={editData.checkIn}
+                  onChange={(e) => setEditData({ ...editData, checkIn: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Giờ ra
+                </label>
+                <input
+                  type="datetime-local"
+                  className="input input-bordered w-full"
+                  value={editData.checkOut}
+                  onChange={(e) => setEditData({ ...editData, checkOut: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Giờ ra</span>
-              </label>
-              <input
-                type="datetime-local"
-                className="input input-bordered"
-                value={editData.checkOut}
-                onChange={(e) => setEditData({ ...editData, checkOut: e.target.value })}
-              />
-            </div>
+
             <div className="modal-action">
               <button className="btn btn-ghost" onClick={() => setEditingAttendance(null)}>
                 Hủy

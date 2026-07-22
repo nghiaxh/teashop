@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { Ingredient } from '../../types';
+import { Plus, X, Pencil } from '@phosphor-icons/react';
 
 export default function InventoryManagement() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -55,6 +56,17 @@ export default function InventoryManagement() {
     });
   };
 
+  const getStockStatus = (quantity: number, reorderLevel: number) => {
+    if (quantity <= 0) return { label: 'Hết', color: 'badge-error' };
+    if (quantity <= reorderLevel) return { label: 'Sắp hết', color: 'badge-warning' };
+    return { label: 'Đủ', color: 'badge-success' };
+  };
+
+  const getStockPercentage = (quantity: number, reorderLevel: number) => {
+    const max = reorderLevel * 2;
+    return Math.min(100, (quantity / max) * 100);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -64,106 +76,136 @@ export default function InventoryManagement() {
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Quản lý Kho</h2>
-        <button className="btn btn-primary" onClick={() => setIsCreating(true)}>
-          + Thêm nguyên liệu
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-base-content">Quản lý Kho</h2>
+        <button className="btn btn-primary btn-sm gap-1" onClick={() => setIsCreating(true)}>
+          <Plus size={16} />
+          Thêm nguyên liệu
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-base-100 rounded-box shadow">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Tên</th>
-              <th>Đơn vị</th>
-              <th>Số lượng</th>
-              <th>Mức tối thiểu</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {ingredients.map(ingredient => (
-              <tr key={ingredient._id}>
-                <td className="font-medium">{ingredient.name}</td>
-                <td>{ingredient.unit}</td>
-                <td>{ingredient.quantity.toLocaleString()}</td>
-                <td>{ingredient.reorderLevel.toLocaleString()}</td>
-                <td>
-                  {ingredient.quantity <= ingredient.reorderLevel ? (
-                    <span className="badge badge-warning">Sắp hết</span>
-                  ) : (
-                    <span className="badge badge-success">Đủ</span>
-                  )}
-                </td>
-                <td>
-                  <button className="btn btn-ghost btn-xs" onClick={() => startEdit(ingredient)}>
-                    Sửa
-                  </button>
-                </td>
+      <div className="bg-white rounded-xl border border-base-300 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="table table-sm">
+            <thead>
+              <tr>
+                <th className="text-base-content/60">Tên</th>
+                <th className="text-base-content/60">Đơn vị</th>
+                <th className="text-base-content/60">Tồn kho</th>
+                <th className="text-base-content/60">Mức tối thiểu</th>
+                <th className="text-base-content/60">Trạng thái</th>
+                <th className="text-base-content/60">Thao tác</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {ingredients.map(ingredient => {
+                const status = getStockStatus(ingredient.quantity, ingredient.reorderLevel);
+                const percentage = getStockPercentage(ingredient.quantity, ingredient.reorderLevel);
+                return (
+                  <tr key={ingredient._id} className="hover">
+                    <td className="font-medium text-sm">{ingredient.name}</td>
+                    <td className="text-sm">{ingredient.unit}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{ingredient.quantity.toLocaleString()}</span>
+                        <div className="w-16 h-1.5 bg-base-200 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              percentage <= 25 ? 'bg-error' : percentage <= 50 ? 'bg-warning' : 'bg-success'
+                            }`}
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="text-sm">{ingredient.reorderLevel.toLocaleString()}</td>
+                    <td>
+                      <span className={`badge badge-sm ${status.color}`}>{status.label}</span>
+                    </td>
+                    <td>
+                      <button className="btn btn-ghost btn-xs btn-square" onClick={() => startEdit(ingredient)}>
+                        <Pencil size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {(editingIngredient || isCreating) && (
         <dialog className="modal modal-open">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">
-              {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
-            </h3>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Tên nguyên liệu</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Đơn vị</span>
-              </label>
-              <select
-                className="select select-bordered"
-                value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+          <div className="modal-box max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">
+                {editingIngredient ? 'Sửa nguyên liệu' : 'Thêm nguyên liệu mới'}
+              </h3>
+              <button
+                className="btn btn-ghost btn-sm btn-square"
+                onClick={() => { setEditingIngredient(null); setIsCreating(false); }}
               >
-                <option value="g">g</option>
-                <option value="kg">kg</option>
-                <option value="ml">ml</option>
-                <option value="l">l</option>
-                <option value="pcs">cái</option>
-              </select>
+                <X size={18} />
+              </button>
             </div>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Số lượng</span>
-              </label>
-              <input
-                type="number"
-                className="input input-bordered"
-                value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-              />
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Tên nguyên liệu
+                </label>
+                <input
+                  type="text"
+                  className="input input-bordered w-full"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Đơn vị
+                </label>
+                <select
+                  className="select select-bordered w-full"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                >
+                  <option value="g">g</option>
+                  <option value="kg">kg</option>
+                  <option value="ml">ml</option>
+                  <option value="l">l</option>
+                  <option value="pcs">cái</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Số lượng
+                </label>
+                <input
+                  type="number"
+                  className="input input-bordered w-full"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-base-content mb-1.5">
+                  Mức tồn kho tối thiểu
+                </label>
+                <input
+                  type="number"
+                  className="input input-bordered w-full"
+                  value={formData.reorderLevel}
+                  onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
+                />
+              </div>
             </div>
-            <div className="form-control mt-4">
-              <label className="label">
-                <span className="label-text">Mức tồn kho tối thiểu</span>
-              </label>
-              <input
-                type="number"
-                className="input input-bordered"
-                value={formData.reorderLevel}
-                onChange={(e) => setFormData({ ...formData, reorderLevel: parseInt(e.target.value) || 0 })}
-              />
-            </div>
+
             <div className="modal-action">
               <button className="btn btn-ghost" onClick={() => { setEditingIngredient(null); setIsCreating(false); }}>
                 Hủy

@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
+import {
+  ShoppingBag,
+  CurrencyDollar,
+  TrendUp,
+  CheckCircle,
+} from '@phosphor-icons/react';
 
 export default function Reports() {
   const [stats, setStats] = useState({
@@ -18,13 +24,14 @@ export default function Reports() {
     try {
       const res = await api.get('/orders');
       const orders = res.data.orders;
+
       const completed = orders.filter((o: any) => o.status === 'completed');
-      const revenue = completed.reduce((sum: number, o: any) => sum + o.totalAmount, 0);
+      const totalRevenue = completed.reduce((sum: number, o: any) => sum + o.totalAmount, 0);
 
       setStats({
         totalOrders: orders.length,
-        totalRevenue: revenue,
-        avgOrderValue: completed.length > 0 ? Math.round(revenue / completed.length) : 0,
+        totalRevenue,
+        avgOrderValue: completed.length > 0 ? totalRevenue / completed.length : 0,
         completedOrders: completed.length
       });
     } catch (error) {
@@ -43,58 +50,79 @@ export default function Reports() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Báo cáo Doanh thu</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-base-content">Báo cáo Doanh thu</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Tổng đơn hàng</div>
-          <div className="stat-value text-primary">{stats.totalOrders}</div>
-        </div>
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Tổng doanh thu</div>
-          <div className="stat-value text-secondary">
-            {stats.totalRevenue.toLocaleString('vi-VN')}đ
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShoppingBag size={20} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Tổng đơn</p>
+              <p className="text-xl font-bold text-base-content">{stats.totalOrders}</p>
+            </div>
           </div>
         </div>
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Giá trị TB/đơn</div>
-          <div className="stat-value text-accent">
-            {stats.avgOrderValue.toLocaleString('vi-VN')}đ
+
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <CurrencyDollar size={20} className="text-secondary" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Doanh thu</p>
+              <p className="text-xl font-bold text-base-content">
+                {stats.totalRevenue.toLocaleString('vi-VN')}đ
+              </p>
+            </div>
           </div>
         </div>
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Đơn hoàn thành</div>
-          <div className="stat-value text-success">{stats.completedOrders}</div>
+
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
+              <TrendUp size={20} className="text-info" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Trung bình/đơn</p>
+              <p className="text-xl font-bold text-base-content">
+                {stats.avgOrderValue.toLocaleString('vi-VN')}đ
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <CheckCircle size={20} className="text-success" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Hoàn thành</p>
+              <p className="text-xl font-bold text-base-content">{stats.completedOrders}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="card bg-base-100 shadow">
-        <div className="card-body">
-          <h3 className="card-title">Thống kê chi tiết</h3>
-          <div className="overflow-x-auto">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Chỉ số</th>
-                  <th>Giá trị</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Tỷ lệ hoàn thành</td>
-                  <td>
-                    {stats.totalOrders > 0
-                      ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
-                      : 0}%
-                  </td>
-                </tr>
-                <tr>
-                  <td>Doanh thu trung bình/ngày</td>
-                  <td>{Math.round(stats.totalRevenue / 30).toLocaleString('vi-VN')}đ</td>
-                </tr>
-              </tbody>
-            </table>
+      <div className="bg-white rounded-xl border border-base-300 p-5">
+        <h3 className="font-semibold text-base-content mb-4">Chi tiết</h3>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center py-2 border-b border-base-200">
+            <span className="text-sm text-base-content/60">Tỷ lệ hoàn thành</span>
+            <span className="font-medium text-base-content">
+              {stats.totalOrders > 0
+                ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
+                : 0}%
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-base-200">
+            <span className="text-sm text-base-content/60">Doanh thu trung bình/ngày</span>
+            <span className="font-medium text-base-content">
+              {stats.totalRevenue.toLocaleString('vi-VN')}đ
+            </span>
           </div>
         </div>
       </div>

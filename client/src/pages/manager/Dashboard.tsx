@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+import {
+  ShoppingBag,
+  CurrencyDollar,
+  Clock,
+  CheckCircle,
+  BookOpen,
+  Package,
+  Users,
+  CalendarCheck,
+  ChartBar,
+} from '@phosphor-icons/react';
 
 export default function ManagerDashboard() {
   const [stats, setStats] = useState({
@@ -41,54 +53,86 @@ export default function ManagerDashboard() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Tổng quan</h2>
+    <div className="space-y-6">
+      <h2 className="text-xl font-bold text-base-content">Tổng quan</h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Tổng đơn hàng</div>
-          <div className="stat-value text-primary">{stats.totalOrders}</div>
-        </div>
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Tổng doanh thu</div>
-          <div className="stat-value text-secondary">
-            {stats.totalRevenue.toLocaleString('vi-VN')}đ
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <ShoppingBag size={20} className="text-primary" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Tổng đơn</p>
+              <p className="text-xl font-bold text-base-content">{stats.totalOrders}</p>
+            </div>
           </div>
         </div>
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Đang chờ</div>
-          <div className="stat-value text-warning">{stats.pendingOrders}</div>
+
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
+              <CurrencyDollar size={20} className="text-secondary" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Doanh thu</p>
+              <p className="text-xl font-bold text-base-content">
+                {stats.totalRevenue.toLocaleString('vi-VN')}đ
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="stat bg-base-100 rounded-box shadow">
-          <div className="stat-title">Đã hoàn thành</div>
-          <div className="stat-value text-success">{stats.completedOrders}</div>
+
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
+              <Clock size={20} className="text-warning" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Đang chờ</p>
+              <p className="text-xl font-bold text-base-content">{stats.pendingOrders}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-base-300 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+              <CheckCircle size={20} className="text-success" />
+            </div>
+            <div>
+              <p className="text-xs text-base-content/50">Hoàn thành</p>
+              <p className="text-xl font-bold text-base-content">{stats.completedOrders}</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
-            <h3 className="card-title">Thao tác nhanh</h3>
-            <div className="grid grid-cols-2 gap-2">
-              <a href="/manager/menu" className="btn btn-outline">Quản lý Menu</a>
-              <a href="/manager/inventory" className="btn btn-outline">Quản lý Kho</a>
-              <a href="/manager/accounts" className="btn btn-outline">Quản lý Nhân viên</a>
-              <a href="/manager/attendance" className="btn btn-outline">Quản lý CC</a>
-              <a href="/manager/reports" className="btn btn-outline col-span-2">Báo cáo Doanh thu</a>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <Link to="/manager/menu" className="bg-white rounded-xl border border-base-300 p-4 hover:border-primary/50 transition-colors">
+          <BookOpen size={20} className="text-primary mb-2" />
+          <p className="text-sm font-medium text-base-content">Quản lý Menu</p>
+        </Link>
 
-        <div className="card bg-base-100 shadow">
-          <div className="card-body">
-            <h3 className="card-title">Hệ thống</h3>
-            <div className="space-y-2 text-sm">
-              <p>Server: <span className="badge badge-success">Running</span></p>
-              <p>Database: <span className="badge badge-success">Connected</span></p>
-              <p>Version: 1.0.0</p>
-            </div>
-          </div>
-        </div>
+        <Link to="/manager/inventory" className="bg-white rounded-xl border border-base-300 p-4 hover:border-primary/50 transition-colors">
+          <Package size={20} className="text-primary mb-2" />
+          <p className="text-sm font-medium text-base-content">Quản lý Kho</p>
+        </Link>
+
+        <Link to="/manager/accounts" className="bg-white rounded-xl border border-base-300 p-4 hover:border-primary/50 transition-colors">
+          <Users size={20} className="text-primary mb-2" />
+          <p className="text-sm font-medium text-base-content">Nhân viên</p>
+        </Link>
+
+        <Link to="/manager/attendance" className="bg-white rounded-xl border border-base-300 p-4 hover:border-primary/50 transition-colors">
+          <CalendarCheck size={20} className="text-primary mb-2" />
+          <p className="text-sm font-medium text-base-content">Chấm công</p>
+        </Link>
+
+        <Link to="/manager/reports" className="bg-white rounded-xl border border-base-300 p-4 hover:border-primary/50 transition-colors">
+          <ChartBar size={20} className="text-primary mb-2" />
+          <p className="text-sm font-medium text-base-content">Báo cáo</p>
+        </Link>
       </div>
     </div>
   );
