@@ -3,6 +3,7 @@ import api from '../../api/axios';
 import type { Order } from '../../types';
 import Pagination from '../../components/Pagination';
 import { usePagination } from '../../hooks/usePagination';
+import { Spinner } from '@heroui/react';
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -41,20 +42,20 @@ export default function OrderHistory() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <span className="badge badge-success badge-sm">Hoàn thành</span>;
+        return <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-success/10 text-success">Hoàn thành</span>;
       case 'pending':
-        return <span className="badge badge-warning badge-sm">Đang chờ</span>;
+        return <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-warning/10 text-warning">Đang chờ</span>;
       case 'cancelled':
-        return <span className="badge badge-error badge-sm">Đã hủy</span>;
+        return <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-danger/10 text-danger">Đã hủy</span>;
       default:
-        return <span className="badge badge-sm">{status}</span>;
+        return <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-content3 text-foreground/60">{status}</span>;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -62,45 +63,45 @@ export default function OrderHistory() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-base-content">Lịch sử đơn hàng</h2>
+        <h2 className="text-xl font-bold text-foreground">Lịch sử đơn hàng</h2>
         {total > 0 && (
-          <p className="text-sm text-base-content/50">
+          <p className="text-sm text-foreground/50">
             Hiển thị {Math.min((currentPage - 1) * limit + 1, total)}-{Math.min(currentPage * limit, total)} / {total} đơn
           </p>
         )}
       </div>
 
-      <div className="bg-white rounded-xl border border-base-300 overflow-hidden">
+      <div className="bg-white rounded-xl border border-divider overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table table-sm">
+          <table className="w-full text-sm">
             <thead>
-              <tr>
-                <th className="text-base-content/60">#</th>
-                <th className="text-base-content/60">Món</th>
-                <th className="text-base-content/60">Size</th>
-                <th className="text-base-content/60">Topping</th>
-                <th className="text-base-content/60">Tổng</th>
-                <th className="text-base-content/60">Trạng thái</th>
-                <th className="text-base-content/60">Ngày</th>
+              <tr className="border-b border-divider">
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">#</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Món</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Size</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Topping</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Tổng</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Trạng thái</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Ngày</th>
               </tr>
             </thead>
             <tbody>
               {orders.map((order, index) => (
-                <tr key={order._id} className="hover">
-                  <td className="text-base-content/50">{(currentPage - 1) * limit + index + 1}</td>
-                  <td>
+                <tr key={order._id} className="border-b border-divider/50 hover:bg-content2/50 transition-colors">
+                  <td className="px-4 py-3 text-foreground/50">{(currentPage - 1) * limit + index + 1}</td>
+                  <td className="px-4 py-3">
                     {order.items.map((item, i) => (
                       <div key={i} className="text-sm">
                         {item.quantity}x {item.productName}
                       </div>
                     ))}
                   </td>
-                  <td>
+                  <td className="px-4 py-3">
                     {order.items.map((item, i) => (
                       <div key={i} className="text-sm">{item.size}</div>
                     ))}
                   </td>
-                  <td>
+                  <td className="px-4 py-3">
                     {order.items.map((item, i) => (
                       <div key={i} className="text-sm">
                         {item.toppings.length > 0
@@ -109,11 +110,11 @@ export default function OrderHistory() {
                       </div>
                     ))}
                   </td>
-                  <td className="font-semibold text-sm">
+                  <td className="px-4 py-3 font-semibold text-sm">
                     {order.totalAmount.toLocaleString('vi-VN')}đ
                   </td>
-                  <td>{getStatusBadge(order.status)}</td>
-                  <td className="text-sm text-base-content/60">
+                  <td className="px-4 py-3">{getStatusBadge(order.status)}</td>
+                  <td className="px-4 py-3 text-sm text-foreground/60">
                     {new Date(order.createdAt).toLocaleDateString('vi-VN')}
                   </td>
                 </tr>
@@ -124,7 +125,7 @@ export default function OrderHistory() {
       </div>
 
       {orders.length === 0 && (
-        <div className="text-center py-12 text-base-content/40">
+        <div className="text-center py-12 text-foreground/40">
           Chưa có đơn hàng nào
         </div>
       )}

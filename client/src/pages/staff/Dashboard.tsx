@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import type { Attendance } from '../../types';
+import { Spinner } from '@heroui/react';
 import {
   ShoppingBag,
   CheckCircle,
@@ -82,48 +83,48 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-base-content">Dashboard</h2>
+      <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-base-300 p-4">
+        <div className="bg-white rounded-xl border border-divider p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <ShoppingBag size={20} className="text-primary" />
             </div>
             <div>
-              <p className="text-xs text-base-content/50">Đơn hôm nay</p>
-              <p className="text-xl font-bold text-base-content">{todayStats.orders}</p>
+              <p className="text-xs text-foreground/50">Đơn hôm nay</p>
+              <p className="text-xl font-bold text-foreground">{todayStats.orders}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-base-300 p-4">
+        <div className="bg-white rounded-xl border border-divider p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
               <CheckCircle size={20} className="text-success" />
             </div>
             <div>
-              <p className="text-xs text-base-content/50">Hoàn thành</p>
-              <p className="text-xl font-bold text-base-content">{todayStats.completed}</p>
+              <p className="text-xs text-foreground/50">Hoàn thành</p>
+              <p className="text-xl font-bold text-foreground">{todayStats.completed}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-base-300 p-4">
+        <div className="bg-white rounded-xl border border-divider p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
               <CurrencyDollar size={20} className="text-secondary" />
             </div>
             <div>
-              <p className="text-xs text-base-content/50">Doanh thu</p>
-              <p className="text-xl font-bold text-base-content">
+              <p className="text-xs text-foreground/50">Doanh thu</p>
+              <p className="text-xl font-bold text-foreground">
                 {todayStats.revenue.toLocaleString('vi-VN')}đ
               </p>
             </div>
@@ -131,13 +132,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-base-300 p-5">
-        <h3 className="font-semibold text-base-content mb-3">Chấm Công</h3>
+      <div className="bg-white rounded-xl border border-divider p-5">
+        <h3 className="font-semibold text-foreground mb-3">Chấm Công</h3>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-sm text-base-content/60">
+            <p className="text-sm text-foreground/60">
               Ca hiện tại:{' '}
-              <span className="font-medium text-base-content">
+              <span className="font-medium text-foreground">
                 {new Date().getHours() < 14 ? 'Sáng (06:00-14:00)' : 'Chiều (14:00-22:00)'}
               </span>
             </p>
@@ -158,26 +159,18 @@ export default function Dashboard() {
           </div>
           <div className="flex gap-2">
             <button
-              className="btn btn-primary btn-sm"
+              className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center"
               onClick={handleCheckIn}
               disabled={!!attendance || checkInLoading}
             >
-              {checkInLoading ? (
-                <span className="loading loading-spinner loading-xs"></span>
-              ) : (
-                'Check-in'
-              )}
+              {checkInLoading ? <Spinner size="sm" color="current" /> : 'Check-in'}
             </button>
             <button
-              className="btn btn-outline btn-sm"
+              className="h-9 px-4 rounded-lg border border-divider bg-white text-foreground text-sm font-medium hover:bg-content2 transition-colors disabled:opacity-50 flex items-center justify-center"
               onClick={handleCheckOut}
               disabled={!attendance || checkOutLoading}
             >
-              {checkOutLoading ? (
-                <span className="loading loading-spinner loading-xs"></span>
-              ) : (
-                'Check-out'
-              )}
+              {checkOutLoading ? <Spinner size="sm" /> : 'Check-out'}
             </button>
           </div>
         </div>
@@ -185,7 +178,7 @@ export default function Dashboard() {
 
       <Link
         to="/orders/new"
-        className="btn btn-primary gap-2"
+        className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
       >
         <PlusCircle size={18} />
         Tạo đơn mới

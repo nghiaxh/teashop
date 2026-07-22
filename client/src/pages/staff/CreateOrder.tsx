@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { Product, CategoryType } from '../../types';
-import { MagnifyingGlass, X, Trash } from '@phosphor-icons/react';
+import { MagnifyingGlass, X, Trash, Coffee } from '@phosphor-icons/react';
+import { Spinner } from '@heroui/react';
 
 interface CartItem {
   product: Product;
@@ -119,7 +120,7 @@ export default function CreateOrder() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -129,11 +130,11 @@ export default function CreateOrder() {
       <div className="flex-1 min-w-0">
         <div className="mb-4">
           <div className="relative">
-            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" />
+            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
             <input
               type="text"
               placeholder="Tìm kiếm món..."
-              className="input input-bordered w-full pl-9 h-10"
+              className="w-full h-10 pl-9 pr-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -144,8 +145,10 @@ export default function CreateOrder() {
           {Object.entries(categoryLabels).map(([key, label]) => (
             <button
               key={key}
-              className={`btn btn-sm whitespace-nowrap ${
-                selectedCategory === key ? 'btn-primary' : 'btn-outline'
+              className={`h-8 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                selectedCategory === key
+                  ? 'bg-primary text-white'
+                  : 'bg-white border border-divider text-foreground hover:bg-content2'
               }`}
               onClick={() => setSelectedCategory(key as CategoryType)}
             >
@@ -158,13 +161,13 @@ export default function CreateOrder() {
           {filteredProducts.map(product => (
             <div
               key={product._id}
-              className="bg-white rounded-xl border border-base-300 p-3 cursor-pointer hover:border-primary/50 transition-colors"
+              className="bg-white rounded-xl border border-divider p-3 cursor-pointer hover:border-primary/40 hover:shadow-sm hover:shadow-primary/[0.04] active:scale-[0.98] transition-all duration-150"
               onClick={() => handleProductClick(product)}
             >
-              <div className="w-full aspect-square bg-base-200 rounded-lg flex items-center justify-center mb-2">
-                <span className="text-3xl">🍵</span>
+              <div className="w-full aspect-square bg-content2 rounded-lg flex items-center justify-center mb-2">
+                <Coffee size={28} className="text-primary/40" />
               </div>
-              <h3 className="text-sm font-medium text-base-content truncate">{product.name}</h3>
+              <h3 className="text-sm font-medium text-foreground truncate">{product.name}</h3>
               <p className="text-sm font-semibold text-primary">
                 {product.price.toLocaleString('vi-VN')}đ
               </p>
@@ -173,42 +176,42 @@ export default function CreateOrder() {
         </div>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-12 text-base-content/40">
+          <div className="text-center py-12 text-foreground/40">
             Không tìm thấy sản phẩm
           </div>
         )}
       </div>
 
       <div className="w-full lg:w-80 shrink-0">
-        <div className="bg-white rounded-xl border border-base-300 p-4 sticky top-0">
-          <h3 className="font-semibold text-base-content mb-4">Đơn hàng</h3>
+        <div className="bg-white rounded-xl border border-divider p-4 sticky top-0 shadow-sm shadow-black/[0.03]">
+          <h3 className="font-semibold text-foreground mb-4">Đơn hàng</h3>
 
           {cart.length === 0 ? (
-            <p className="text-sm text-base-content/40 text-center py-8">
+            <p className="text-sm text-foreground/40 text-center py-8">
               Chưa có món nào
             </p>
           ) : (
             <div className="space-y-2 mb-4 max-h-80 overflow-y-auto">
               {cart.map((item, index) => (
-                <div key={index} className="flex justify-between items-start p-2.5 bg-base-200 rounded-lg">
+                <div key={index} className="flex justify-between items-start p-2.5 bg-content2 rounded-lg">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-base-content truncate">{item.product.name}</p>
-                    <p className="text-xs text-base-content/50">
+                    <p className="text-sm font-medium text-foreground truncate">{item.product.name}</p>
+                    <p className="text-xs text-foreground/50">
                       Size {item.size} | Đường {item.sugarLevel}% | Đá {item.iceLevel}%
                     </p>
                     {item.toppings.length > 0 && (
-                      <p className="text-xs text-base-content/50">
+                      <p className="text-xs text-foreground/50">
                         Topping: {item.toppings.map(t => t.name).join(', ')}
                       </p>
                     )}
-                    <p className="text-xs text-base-content/50">x{item.quantity}</p>
+                    <p className="text-xs text-foreground/50">x{item.quantity}</p>
                   </div>
                   <div className="text-right ml-2">
-                    <p className="text-sm font-semibold text-base-content">
+                    <p className="text-sm font-semibold text-foreground">
                       {item.itemTotal.toLocaleString('vi-VN')}đ
                     </p>
                     <button
-                      className="text-error hover:text-error/80 mt-0.5"
+                      className="text-danger hover:text-danger/80 mt-0.5"
                       onClick={() => handleRemoveFromCart(index)}
                     >
                       <Trash size={12} />
@@ -219,33 +222,30 @@ export default function CreateOrder() {
             </div>
           )}
 
-          <div className="border-t border-base-300 pt-3">
-            <div className="flex justify-between font-semibold text-base-content mb-3">
+          <div className="border-t border-divider pt-3">
+            <div className="flex justify-between font-semibold text-foreground mb-3">
               <span>Tổng:</span>
               <span className="text-primary">{totalAmount.toLocaleString('vi-VN')}đ</span>
             </div>
             <button
-              className="btn btn-primary w-full"
+              className="w-full h-10 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 flex items-center justify-center"
               onClick={handleCreateOrder}
               disabled={cart.length === 0 || submitting}
             >
-              {submitting ? (
-                <span className="loading loading-spinner loading-sm"></span>
-              ) : (
-                'Tạo đơn'
-              )}
+              {submitting ? <Spinner size="sm" color="current" /> : 'Tạo đơn'}
             </button>
           </div>
         </div>
       </div>
 
       {selectedProduct && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedProduct(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">{selectedProduct.name}</h3>
+              <h3 className="font-bold text-lg text-foreground">{selectedProduct.name}</h3>
               <button
-                className="btn btn-ghost btn-sm btn-square"
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-content2 transition-colors"
                 onClick={() => setSelectedProduct(null)}
               >
                 <X size={18} />
@@ -253,13 +253,15 @@ export default function CreateOrder() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-base-content mb-2">Size</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Size</label>
               <div className="flex gap-2">
                 {(['S', 'M', 'L'] as const).map(size => (
                   <button
                     key={size}
-                    className={`btn btn-sm flex-1 ${
-                      orderSize === size ? 'btn-primary' : 'btn-outline'
+                    className={`flex-1 h-9 rounded-lg text-sm font-medium transition-colors ${
+                      orderSize === size
+                        ? 'bg-primary text-white'
+                        : 'bg-white border border-divider text-foreground hover:bg-content2'
                     }`}
                     onClick={() => setOrderSize(size)}
                   >
@@ -270,7 +272,7 @@ export default function CreateOrder() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-base-content mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Đường: {orderSugar}%
               </label>
               <input
@@ -280,9 +282,9 @@ export default function CreateOrder() {
                 step="25"
                 value={orderSugar}
                 onChange={(e) => setOrderSugar(parseInt(e.target.value))}
-                className="range range-primary range-sm"
+                className="w-full h-2 bg-content3 rounded-full appearance-none cursor-pointer accent-primary"
               />
-              <div className="flex justify-between text-[10px] text-base-content/40 mt-1">
+              <div className="flex justify-between text-[10px] text-foreground/40 mt-1">
                 <span>0%</span>
                 <span>25%</span>
                 <span>50%</span>
@@ -292,7 +294,7 @@ export default function CreateOrder() {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-base-content mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 Đá: {orderIce}%
               </label>
               <input
@@ -302,9 +304,9 @@ export default function CreateOrder() {
                 step="25"
                 value={orderIce}
                 onChange={(e) => setOrderIce(parseInt(e.target.value))}
-                className="range range-primary range-sm"
+                className="w-full h-2 bg-content3 rounded-full appearance-none cursor-pointer accent-primary"
               />
-              <div className="flex justify-between text-[10px] text-base-content/40 mt-1">
+              <div className="flex justify-between text-[10px] text-foreground/40 mt-1">
                 <span>0%</span>
                 <span>25%</span>
                 <span>50%</span>
@@ -315,13 +317,13 @@ export default function CreateOrder() {
 
             {selectedProduct.availableToppings.length > 0 && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-base-content mb-2">Topping</label>
+                <label className="block text-sm font-medium text-foreground mb-2">Topping</label>
                 <div className="space-y-2">
                   {selectedProduct.availableToppings.map(topping => (
-                    <label key={topping.name} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-base-200">
+                    <label key={topping.name} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-content2">
                       <input
                         type="checkbox"
-                        className="checkbox checkbox-primary checkbox-sm"
+                        className="w-4 h-4 rounded border-divider text-primary focus:ring-primary"
                         checked={orderToppings.some(t => t.name === topping.name)}
                         onChange={(e) => {
                           if (e.target.checked) {
@@ -332,7 +334,7 @@ export default function CreateOrder() {
                         }}
                       />
                       <span className="text-sm flex-1">{topping.name}</span>
-                      <span className="text-xs text-base-content/50">+{topping.price.toLocaleString('vi-VN')}đ</span>
+                      <span className="text-xs text-foreground/50">+{topping.price.toLocaleString('vi-VN')}đ</span>
                     </label>
                   ))}
                 </div>
@@ -340,17 +342,17 @@ export default function CreateOrder() {
             )}
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-base-content mb-2">Số lượng</label>
+              <label className="block text-sm font-medium text-foreground mb-2">Số lượng</label>
               <div className="flex items-center gap-3">
                 <button
-                  className="btn btn-sm btn-outline"
+                  className="h-9 w-9 rounded-lg border border-divider bg-white text-foreground font-medium hover:bg-content2 transition-colors flex items-center justify-center"
                   onClick={() => setOrderQuantity(Math.max(1, orderQuantity - 1))}
                 >
                   -
                 </button>
                 <span className="font-semibold text-lg w-8 text-center">{orderQuantity}</span>
                 <button
-                  className="btn btn-sm btn-outline"
+                  className="h-9 w-9 rounded-lg border border-divider bg-white text-foreground font-medium hover:bg-content2 transition-colors flex items-center justify-center"
                   onClick={() => setOrderQuantity(orderQuantity + 1)}
                 >
                   +
@@ -358,19 +360,22 @@ export default function CreateOrder() {
               </div>
             </div>
 
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => setSelectedProduct(null)}>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                className="h-10 px-4 rounded-lg border border-divider bg-white text-foreground text-sm font-medium hover:bg-content2 transition-colors"
+                onClick={() => setSelectedProduct(null)}
+              >
                 Hủy
               </button>
-              <button className="btn btn-primary" onClick={handleAddToCart}>
+              <button
+                className="h-10 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all duration-150"
+                onClick={handleAddToCart}
+              >
                 Thêm vào đơn
               </button>
             </div>
           </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setSelectedProduct(null)}>close</button>
-          </form>
-        </dialog>
+        </div>
       )}
     </div>
   );

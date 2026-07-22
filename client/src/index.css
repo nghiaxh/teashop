@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@import "@heroui/styles";
 
 @theme {
   --color-teashop-50: #fdf8f0;
@@ -12,45 +12,35 @@
   --color-teashop-700: #6d4c33;
   --color-teashop-800: #4a3422;
   --color-teashop-900: #2d1f14;
+
+  --color-primary: #a67c52;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #8b6340;
+  --color-secondary-foreground: #ffffff;
+  --color-success: #22c55e;
+  --color-success-foreground: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #ffffff;
+  --color-danger: #ef4444;
+  --color-danger-foreground: #ffffff;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+
+  --color-background: #fdf8f0;
+  --color-foreground: #2d1f14;
+  --color-content1: #ffffff;
+  --color-content2: #f5ebe0;
+  --color-content3: #e8d5b7;
+  --color-content4: #d4b896;
+
+  --color-divider: #e8d5b7;
+  --color-focus: #a67c52;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.table :where(th) {
-  font-weight: 600;
-  color: var(--color-base-content);
-  background-color: var(--color-base-200);
-}
-
-.table :where(td) {
-  border-color: var(--color-base-300);
-}
-
-.btn {
-  transition: all 150ms ease;
-}
-
-.btn:active {
-  transform: scale(0.98);
-}
-
-.modal-box {
-  border: 1px solid var(--color-base-300);
-  background-color: var(--color-base-100);
-}
-
-.alert {
-  border: 1px solid;
-}
-
-.input:focus,
-.select:focus,
-.textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(166, 124, 82, 0.15);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }

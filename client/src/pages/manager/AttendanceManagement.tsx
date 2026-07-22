@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { Attendance } from '../../types';
 import { X, Pencil } from '@phosphor-icons/react';
+import { Spinner } from '@heroui/react';
 
 export default function AttendanceManagement() {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
@@ -59,52 +60,54 @@ export default function AttendanceManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-base-content">Quản lý Chấm công</h2>
+      <h2 className="text-xl font-bold text-foreground">Quản lý Chấm công</h2>
 
-      <div className="bg-white rounded-xl border border-base-300 overflow-hidden">
+      <div className="bg-white rounded-xl border border-divider overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table table-sm">
+          <table className="w-full text-sm">
             <thead>
-              <tr>
-                <th className="text-base-content/60">Nhân viên</th>
-                <th className="text-base-content/60">Ngày</th>
-                <th className="text-base-content/60">Ca</th>
-                <th className="text-base-content/60">Giờ vào</th>
-                <th className="text-base-content/60">Giờ ra</th>
-                <th className="text-base-content/60">Đi trễ</th>
-                <th className="text-base-content/60">Giờ làm</th>
-                <th className="text-base-content/60">Thao tác</th>
+              <tr className="border-b border-divider">
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Nhân viên</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Ngày</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Ca</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Giờ vào</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Giờ ra</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Đi trễ</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Giờ làm</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {attendances.map(att => (
-                <tr key={att._id} className="hover">
-                  <td className="text-sm">{att.userId?.name || 'N/A'}</td>
-                  <td className="text-sm">{new Date(att.date).toLocaleDateString('vi-VN')}</td>
-                  <td>
-                    <span className={`badge badge-sm ${att.shift === 'morning' ? 'badge-info' : 'badge-secondary'}`}>
+                <tr key={att._id} className="border-b border-divider/50 hover:bg-content2/50 transition-colors">
+                  <td className="px-4 py-3 text-sm">{att.userId?.name || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm">{new Date(att.date).toLocaleDateString('vi-VN')}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center h-5 px-2 rounded-full text-xs font-medium ${
+                      att.shift === 'morning' ? 'bg-info/10 text-info' : 'bg-secondary/10 text-secondary'
+                    }`}>
                       {att.shift === 'morning' ? 'Sáng' : 'Chiều'}
                     </span>
                   </td>
-                  <td className="text-sm">{formatTime(att.checkIn)}</td>
-                  <td className="text-sm">{formatTime(att.checkOut)}</td>
-                  <td>
+                  <td className="px-4 py-3 text-sm">{formatTime(att.checkIn)}</td>
+                  <td className="px-4 py-3 text-sm">{formatTime(att.checkOut)}</td>
+                  <td className="px-4 py-3">
                     {att.isLate ? (
-                      <span className="badge badge-warning badge-sm">Trễ</span>
+                      <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-warning/10 text-warning">Trễ</span>
                     ) : (
-                      <span className="badge badge-success badge-sm">OK</span>
+                      <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-success/10 text-success">OK</span>
                     )}
                   </td>
-                  <td className="text-sm">{att.hoursWorked}h</td>
-                  <td>
-                    <button className="btn btn-ghost btn-xs btn-square" onClick={() => startEdit(att)}>
+                  <td className="px-4 py-3 text-sm">{att.hoursWorked}h</td>
+                  <td className="px-4 py-3">
+                    <button className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-content2 transition-colors" onClick={() => startEdit(att)}>
                       <Pencil size={14} />
                     </button>
                   </td>
@@ -116,12 +119,13 @@ export default function AttendanceManagement() {
       </div>
 
       {editingAttendance && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setEditingAttendance(null)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">Chỉnh sửa chấm công</h3>
+              <h3 className="font-bold text-lg text-foreground">Chỉnh sửa chấm công</h3>
               <button
-                className="btn btn-ghost btn-sm btn-square"
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-content2 transition-colors"
                 onClick={() => setEditingAttendance(null)}
               >
                 <X size={18} />
@@ -130,11 +134,11 @@ export default function AttendanceManagement() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Ca
                 </label>
                 <select
-                  className="select select-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={editData.shift}
                   onChange={(e) => setEditData({ ...editData, shift: e.target.value as 'morning' | 'afternoon' })}
                 >
@@ -144,43 +148,46 @@ export default function AttendanceManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Giờ vào
                 </label>
                 <input
                   type="datetime-local"
-                  className="input input-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={editData.checkIn}
                   onChange={(e) => setEditData({ ...editData, checkIn: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Giờ ra
                 </label>
                 <input
                   type="datetime-local"
-                  className="input input-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={editData.checkOut}
                   onChange={(e) => setEditData({ ...editData, checkOut: e.target.value })}
                 />
               </div>
             </div>
 
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => setEditingAttendance(null)}>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                className="h-10 px-4 rounded-lg border border-divider bg-white text-foreground text-sm font-medium hover:bg-content2 transition-colors"
+                onClick={() => setEditingAttendance(null)}
+              >
                 Hủy
               </button>
-              <button className="btn btn-primary" onClick={handleUpdate}>
+              <button
+                className="h-10 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+                onClick={handleUpdate}
+              >
                 Cập nhật
               </button>
             </div>
           </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setEditingAttendance(null)}>close</button>
-          </form>
-        </dialog>
+        </div>
       )}
     </div>
   );

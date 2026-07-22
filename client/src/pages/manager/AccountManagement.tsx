@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { User } from '../../types';
 import { Plus, X } from '@phosphor-icons/react';
+import { Spinner } from '@heroui/react';
 
 export default function AccountManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -43,7 +44,7 @@ export default function AccountManagement() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -51,36 +52,41 @@ export default function AccountManagement() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-base-content">Quản lý Nhân viên</h2>
-        <button className="btn btn-primary btn-sm gap-1" onClick={() => setIsCreating(true)}>
+        <h2 className="text-xl font-bold text-foreground">Quản lý Nhân viên</h2>
+        <button
+          className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1"
+          onClick={() => setIsCreating(true)}
+        >
           <Plus size={16} />
           Thêm nhân viên
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-base-300 overflow-hidden">
+      <div className="bg-white rounded-xl border border-divider overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="table table-sm">
+          <table className="w-full text-sm">
             <thead>
-              <tr>
-                <th className="text-base-content/60">Tên</th>
-                <th className="text-base-content/60">Username</th>
-                <th className="text-base-content/60">Quyền</th>
-                <th className="text-base-content/60">Trạng thái</th>
+              <tr className="border-b border-divider">
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Tên</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Username</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Quyền</th>
+                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Trạng thái</th>
               </tr>
             </thead>
             <tbody>
               {users.map(user => (
-                <tr key={user.id} className="hover">
-                  <td className="font-medium text-sm">{user.name}</td>
-                  <td className="text-sm">{user.username}</td>
-                  <td>
-                    <span className={`badge badge-sm ${user.role === 'manager' ? 'badge-primary' : 'badge-outline'}`}>
+                <tr key={user.id} className="border-b border-divider/50 hover:bg-content2/50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-sm">{user.name}</td>
+                  <td className="px-4 py-3 text-sm">{user.username}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center h-5 px-2 rounded-full text-xs font-medium ${
+                      user.role === 'manager' ? 'bg-primary/10 text-primary' : 'border border-divider text-foreground/70'
+                    }`}>
                       {user.role}
                     </span>
                   </td>
-                  <td>
-                    <span className="badge badge-success badge-sm">Hoạt động</span>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium bg-success/10 text-success">Hoạt động</span>
                   </td>
                 </tr>
               ))}
@@ -90,18 +96,19 @@ export default function AccountManagement() {
       </div>
 
       {users.length === 0 && (
-        <div className="text-center py-12 text-base-content/40">
+        <div className="text-center py-12 text-foreground/40">
           Chưa có nhân viên nào
         </div>
       )}
 
       {isCreating && (
-        <dialog className="modal modal-open">
-          <div className="modal-box max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setIsCreating(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">Thêm nhân viên mới</h3>
+              <h3 className="font-bold text-lg text-foreground">Thêm nhân viên mới</h3>
               <button
-                className="btn btn-ghost btn-sm btn-square"
+                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-content2 transition-colors"
                 onClick={() => setIsCreating(false)}
               >
                 <X size={18} />
@@ -110,47 +117,47 @@ export default function AccountManagement() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Username
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Password
                 </label>
                 <input
                   type="password"
-                  className="input input-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Họ tên
                 </label>
                 <input
                   type="text"
-                  className="input input-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1.5">
+                <label className="block text-sm font-medium text-foreground mb-1.5">
                   Quyền
                 </label>
                 <select
-                  className="select select-bordered w-full"
+                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as 'staff' | 'manager' })}
                 >
@@ -160,19 +167,22 @@ export default function AccountManagement() {
               </div>
             </div>
 
-            <div className="modal-action">
-              <button className="btn btn-ghost" onClick={() => setIsCreating(false)}>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                className="h-10 px-4 rounded-lg border border-divider bg-white text-foreground text-sm font-medium hover:bg-content2 transition-colors"
+                onClick={() => setIsCreating(false)}
+              >
                 Hủy
               </button>
-              <button className="btn btn-primary" onClick={handleSubmit}>
+              <button
+                className="h-10 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
+                onClick={handleSubmit}
+              >
                 Thêm mới
               </button>
             </div>
           </div>
-          <form method="dialog" className="modal-backdrop">
-            <button onClick={() => setIsCreating(false)}>close</button>
-          </form>
-        </dialog>
+        </div>
       )}
     </div>
   );

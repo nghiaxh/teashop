@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ManagerRoute from './components/ManagerRoute';
 import DashboardLayout from './components/Layout/DashboardLayout';
+import { Spinner } from '@heroui/react';
 
 import Login from './pages/Login';
 import StaffDashboard from './pages/staff/Dashboard';
@@ -23,7 +24,7 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }

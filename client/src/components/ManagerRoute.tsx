@@ -1,5 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Spinner } from '@heroui/react';
 
 export default function ManagerRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -7,7 +8,7 @@ export default function ManagerRoute({ children }: { children: React.ReactNode }
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+        <Spinner size="lg" />
       </div>
     );
   }
