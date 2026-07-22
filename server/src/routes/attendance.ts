@@ -24,7 +24,7 @@ router.post('/check-in', requireAuth, async (req: AuthRequest, res: Response): P
 
   const existing = await Attendance.findOne({ userId, date, shift });
   if (existing) {
-    res.status(400).json({ error: 'Already checked in for this shift' });
+    res.status(400).json({ error: 'Đã điểm danh cho ca này rồi' });
     return;
   }
 
@@ -55,7 +55,7 @@ router.post('/check-out', requireAuth, async (req: AuthRequest, res: Response): 
   });
 
   if (!attendance) {
-    res.status(400).json({ error: 'No active check-in found' });
+    res.status(400).json({ error: 'Chưa có bản ghi vào ca' });
     return;
   }
 
@@ -93,14 +93,60 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
 });
 
 router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
+  const { checkIn, checkOut, shift } = req.body;
+  const update: Record<string, any> = {};
+
+  if (checkIn !== undefined) {
+    const date = new Date(checkIn);
+    if (isNaN(date.getTime())) {
+      res.status(400).json({ error: 'Thời gian vào ca không hợp lệ' });
+      return;
+    }
+    update.checkIn = date;
+  }
+
+  if (checkOut !== undefined) {
+    const date = new Date(checkOut);
+    if (isNaN(date.getTime())) {
+      res.status(400).json({ error: 'Thời gian ra ca không hợp lệ' });
+      return;
+    }
+    update.checkOut = date;
+  }
+
+  if (shift !== undefined) {
+    if (!['morning', 'afternoon'].includes(shift)) {
+      res.status(400).json({ error: 'Ca làm việc không hợp lệ' });
+      return;
+    }
+    update.shift = shift;
+  }
+
+  if (update.checkIn && update.checkOut) {
+    update.hoursWorked = Math.round(
+      (update.checkOut.getTime() - update.checkIn.getTime()) / (1000 * 60 * 60) * 10
+    ) / 10;
+  } else if (update.checkIn || update.checkOut) {
+    const existing = await Attendance.findById(req.params.id);
+    if (existing) {
+      const ci = update.checkIn || existing.checkIn;
+      const co = update.checkOut || existing.checkOut;
+      if (ci && co) {
+        update.hoursWorked = Math.round(
+          (co.getTime() - ci.getTime()) / (1000 * 60 * 60) * 10
+        ) / 10;
+      }
+    }
+  }
+
   const attendance = await Attendance.findByIdAndUpdate(
     req.params.id,
-    req.body,
+    update,
     { new: true }
   );
 
   if (!attendance) {
-    res.status(404).json({ error: 'Attendance record not found' });
+    res.status(404).json({ error: 'Không tìm thấy bản ghi chấm công' });
     return;
   }
 

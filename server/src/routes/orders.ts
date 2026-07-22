@@ -34,11 +34,28 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
   res.json({ orders });
 });
 
+router.get('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  const order = await Order.findById(req.params.id)
+    .populate('userId', 'name username');
+
+  if (!order) {
+    res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
+    return;
+  }
+
+  if (req.user?.role === 'staff' && order.userId._id.toString() !== req.user.id) {
+    res.status(403).json({ error: 'Không có quyền xem đơn hàng này' });
+    return;
+  }
+
+  res.json({ order });
+});
+
 router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { items } = req.body;
+  const { items, note } = req.body;
 
   if (!items || items.length === 0) {
-    res.status(400).json({ error: 'Order must have at least one item' });
+    res.status(400).json({ error: 'Đơn hàng phải có ít nhất 1 món' });
     return;
   }
 
@@ -46,7 +63,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<v
   for (const item of items) {
     const product = await Product.findById(item.product);
     if (!product) {
-      res.status(400).json({ error: `Product ${item.product} not found` });
+      res.status(400).json({ error: `Không tìm thấy sản phẩm ${item.product}` });
       return;
     }
 
@@ -69,6 +86,7 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<v
     userId: req.user!.id,
     items: orderItems,
     totalAmount,
+    note: note || undefined,
     status: 'pending'
   });
 
@@ -81,7 +99,7 @@ router.put('/:id/status', requireAuth, requireManager, async (req: AuthRequest, 
   const { status } = req.body;
 
   if (!['pending', 'completed', 'cancelled'].includes(status)) {
-    res.status(400).json({ error: 'Invalid status' });
+    res.status(400).json({ error: 'Trạng thái không hợp lệ' });
     return;
   }
 
@@ -92,7 +110,7 @@ router.put('/:id/status', requireAuth, requireManager, async (req: AuthRequest, 
   );
 
   if (!order) {
-    res.status(404).json({ error: 'Order not found' });
+    res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
     return;
   }
 

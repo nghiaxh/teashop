@@ -3,6 +3,11 @@ export interface User {
   username: string;
   name: string;
   role: 'staff' | 'manager';
+  phone?: string;
+  email?: string;
+  gender?: 'male' | 'female' | 'other';
+  dateOfBirth?: string;
+  hireDate?: string;
 }
 
 export interface ProductTopping {
@@ -67,6 +72,7 @@ export interface Order {
   };
   items: OrderItem[];
   totalAmount: number;
+  note?: string;
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: string;
 }

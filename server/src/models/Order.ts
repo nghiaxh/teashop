@@ -21,8 +21,10 @@ export interface IOrder extends Document {
   userId: mongoose.Types.ObjectId;
   items: IOrderItem[];
   totalAmount: number;
+  note?: string;
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const orderSchema = new Schema<IOrder>({
@@ -42,12 +44,12 @@ const orderSchema = new Schema<IOrder>({
     itemTotal: { type: Number, required: true, min: 0 }
   }],
   totalAmount: { type: Number, required: true, min: 0 },
+  note: { type: String, trim: true, maxlength: 200 },
   status: {
     type: String,
     enum: ['pending', 'completed', 'cancelled'],
     default: 'pending'
-  },
-  createdAt: { type: Date, default: Date.now }
-});
+  }
+}, { timestamps: true });
 
 export default mongoose.model<IOrder>('Order', orderSchema);

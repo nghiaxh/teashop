@@ -55,7 +55,13 @@ const products = [
   { name: 'Matcha Đá Xay', category: 'da-xay', price: 35000, availableToppings: [toppings[5], toppings[3]] },
   { name: 'Cà Phê Đá Xay', category: 'da-xay', price: 35000, availableToppings: [toppings[5]] },
   { name: 'Dâu Đá Xay', category: 'da-xay', price: 35000, availableToppings: [toppings[1]] },
-  { name: 'Cookies & Cream', category: 'da-xay', price: 38000, availableToppings: [toppings[5]] }
+  { name: 'Cookies & Cream', category: 'da-xay', price: 38000, availableToppings: [toppings[5]] },
+  { name: 'Trân châu đen', category: 'topping', price: 5000, availableToppings: [] },
+  { name: 'Trân châu trắng', category: 'topping', price: 5000, availableToppings: [] },
+  { name: 'Thạch dừa', category: 'topping', price: 5000, availableToppings: [] },
+  { name: 'Pudding', category: 'topping', price: 8000, availableToppings: [] },
+  { name: 'Khoai môn', category: 'topping', price: 8000, availableToppings: [] },
+  { name: 'Kem cheese', category: 'topping', price: 10000, availableToppings: [] }
 ];
 
 export async function seedDatabase(): Promise<void> {
@@ -69,25 +75,33 @@ export async function seedDatabase(): Promise<void> {
 
   const hashedPassword = await bcrypt.hash('123456', 10);
 
+  const staffData = [
+    { username: 'staff01', name: 'Nguyễn Văn An', gender: 'male' as const, phone: '0901234001', email: 'an.nguyen@teashop.vn', dateOfBirth: new Date('1995-03-15'), hireDate: new Date('2022-06-01') },
+    { username: 'staff02', name: 'Trần Thị Bình', gender: 'female' as const, phone: '0901234002', email: 'binh.tran@teashop.vn', dateOfBirth: new Date('1998-07-22'), hireDate: new Date('2022-08-15') },
+    { username: 'staff03', name: 'Lê Minh Đức', gender: 'male' as const, phone: '0901234003', email: 'duc.le@teashop.vn', dateOfBirth: new Date('1993-11-10'), hireDate: new Date('2023-01-10') },
+    { username: 'staff04', name: 'Phạm Thị Elen', gender: 'female' as const, phone: '0901234004', email: 'elen.pham@teashop.vn', dateOfBirth: new Date('2000-01-05'), hireDate: new Date('2023-03-20') },
+    { username: 'staff05', name: 'Hoàng Văn Giang', gender: 'male' as const, phone: '0901234005', email: 'giang.hoang@teashop.vn', dateOfBirth: new Date('1996-09-18'), hireDate: new Date('2023-05-01') },
+    { username: 'staff06', name: 'Vũ Thị Hằng', gender: 'female' as const, phone: '0901234006', email: 'hang.vu@teashop.vn', dateOfBirth: new Date('1999-04-25'), hireDate: new Date('2023-07-12') },
+    { username: 'staff07', name: 'Đặng Văn Kiên', gender: 'male' as const, phone: '0901234007', email: 'kien.dang@teashop.vn', dateOfBirth: new Date('1994-12-03'), hireDate: new Date('2023-09-01') },
+    { username: 'staff08', name: 'Bùi Thị Lan', gender: 'female' as const, phone: '0901234008', email: 'lan.bui@teashop.vn', dateOfBirth: new Date('1997-06-14'), hireDate: new Date('2024-01-15') },
+    { username: 'staff09', name: 'Ngô Minh Minh', gender: 'male' as const, phone: '0901234009', email: 'minh.ngo@teashop.vn', dateOfBirth: new Date('2001-08-30'), hireDate: new Date('2024-03-01') },
+    { username: 'staff10', name: 'Đỗ Thị Oanh', gender: 'female' as const, phone: '0901234010', email: 'oanh.do@teashop.vn', dateOfBirth: new Date('1998-02-20'), hireDate: new Date('2024-05-10') },
+  ];
+
+  const managerData = [
+    { username: 'manager01', name: 'Phan Văn Quang', gender: 'male' as const, phone: '0901234101', email: 'quang.phan@teashop.vn', dateOfBirth: new Date('1990-05-12'), hireDate: new Date('2022-01-01') },
+    { username: 'manager02', name: 'Lý Thị Hương', gender: 'female' as const, phone: '0901234102', email: 'huong.ly@teashop.vn', dateOfBirth: new Date('1992-10-08'), hireDate: new Date('2022-03-01') },
+  ];
+
   const staffUsers = [];
-  for (let i = 1; i <= 15; i++) {
-    const user = await User.create({
-      username: `staff${i.toString().padStart(2, '0')}`,
-      password: hashedPassword,
-      name: `Nhân viên ${i.toString().padStart(2, '0')}`,
-      role: 'staff'
-    });
+  for (const data of staffData) {
+    const user = await User.create({ ...data, password: hashedPassword, role: 'staff' });
     staffUsers.push(user);
   }
 
   const managerUsers = [];
-  for (let i = 1; i <= 3; i++) {
-    const user = await User.create({
-      username: `manager${i.toString().padStart(2, '0')}`,
-      password: hashedPassword,
-      name: `Quản lý ${i.toString().padStart(2, '0')}`,
-      role: 'manager'
-    });
+  for (const data of managerData) {
+    const user = await User.create({ ...data, password: hashedPassword, role: 'manager' });
     managerUsers.push(user);
   }
 
@@ -110,6 +124,16 @@ export async function seedDatabase(): Promise<void> {
   }));
 
   const createdProducts = await Product.insertMany(productDocs);
+
+  const sampleNotes = [
+    'Ít đường',
+    'Nhiều đá',
+    'Không đá',
+    'Ít sữa',
+    'Thêm đường',
+    'Làm nhanh',
+    'Ít đá'
+  ];
 
   const allUsers = [...staffUsers, ...managerUsers];
   const orders = [];
@@ -162,6 +186,7 @@ export async function seedDatabase(): Promise<void> {
         userId: user._id,
         items,
         totalAmount,
+        note: Math.random() > 0.5 ? sampleNotes[Math.floor(Math.random() * sampleNotes.length)] : undefined,
         status: statuses[Math.floor(Math.random() * statuses.length)],
         createdAt: date
       });

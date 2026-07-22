@@ -22,19 +22,65 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
 });
 
 router.post('/', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
-  const product = await Product.create(req.body);
+  const { name, category, price } = req.body;
+
+  if (!name || typeof name !== 'string' || !name.trim()) {
+    res.status(400).json({ error: 'Tên sản phẩm không được để trống' });
+    return;
+  }
+
+  const validCategories = ['tra-sua', 'tra-trai-cay', 'ca-phe', 'da-xay', 'topping'];
+  if (!category || !validCategories.includes(category)) {
+    res.status(400).json({ error: 'Danh mục không hợp lệ' });
+    return;
+  }
+
+  if (price === undefined || typeof price !== 'number' || price < 0) {
+    res.status(400).json({ error: 'Giá phải là số không âm' });
+    return;
+  }
+
+  const product = await Product.create({ name: name.trim(), category, price });
   res.status(201).json({ product });
 });
 
 router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
+  const { name, category, price } = req.body;
+  const update: Record<string, any> = {};
+
+  if (name !== undefined) {
+    if (typeof name !== 'string' || !name.trim()) {
+      res.status(400).json({ error: 'Tên sản phẩm không được để trống' });
+      return;
+    }
+    update.name = name.trim();
+  }
+
+  if (category !== undefined) {
+    const validCategories = ['tra-sua', 'tra-trai-cay', 'ca-phe', 'da-xay', 'topping'];
+    if (!validCategories.includes(category)) {
+      res.status(400).json({ error: 'Danh mục không hợp lệ' });
+      return;
+    }
+    update.category = category;
+  }
+
+  if (price !== undefined) {
+    if (typeof price !== 'number' || price < 0) {
+      res.status(400).json({ error: 'Giá phải là số không âm' });
+      return;
+    }
+    update.price = price;
+  }
+
   const product = await Product.findByIdAndUpdate(
     req.params.id,
-    req.body,
+    update,
     { new: true }
   );
 
   if (!product) {
-    res.status(404).json({ error: 'Product not found' });
+    res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
     return;
   }
 
@@ -49,11 +95,11 @@ router.delete('/:id', requireAuth, requireManager, async (req: AuthRequest, res:
   );
 
   if (!product) {
-    res.status(404).json({ error: 'Product not found' });
+    res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
     return;
   }
 
-  res.json({ message: 'Product deleted' });
+  res.json({ message: 'Đã xóa sản phẩm' });
 });
 
 export default router;
