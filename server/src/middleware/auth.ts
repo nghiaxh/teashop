@@ -17,13 +17,19 @@ export const requireAuth = async (
   next: NextFunction
 ): Promise<void> => {
   if (!req.session?.userId) {
-    res.status(401).json({ error: 'Not authenticated' });
+    res.status(401).json({ error: 'Chưa đăng nhập' });
+    return;
+  }
+
+  if (req.session.cachedUser) {
+    req.user = req.session.cachedUser;
+    next();
     return;
   }
 
   const user = await User.findById(req.session.userId).select('-password');
   if (!user || !user.isActive) {
-    res.status(401).json({ error: 'User not found or inactive' });
+    res.status(401).json({ error: 'Không tìm thấy người dùng hoặc đã bị khóa' });
     return;
   }
 
@@ -34,6 +40,8 @@ export const requireAuth = async (
     role: user.role
   };
 
+  req.session.cachedUser = req.user;
+
   next();
 };
 
@@ -43,7 +51,7 @@ export const requireManager = (
   next: NextFunction
 ): void => {
   if (req.user?.role !== 'manager') {
-    res.status(403).json({ error: 'Manager access required' });
+    res.status(403).json({ error: 'Cần quyền quản lý' });
     return;
   }
   next();
