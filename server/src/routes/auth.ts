@@ -30,7 +30,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     return;
   }
 
-  req.session.userId = user._id;
+  req.session.userId = user._id.toString();
   req.session.role = user.role;
 
   res.json({

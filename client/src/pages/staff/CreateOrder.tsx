@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Product, CategoryType } from '../../types';
+import type { Product, CategoryType } from '../../types';
 
 interface CartItem {
   product: Product;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { User } from '../../types';
+import type { User } from '../../types';
 
 export default function AccountManagement() {
   const [users, setUsers] = useState<User[]>([]);

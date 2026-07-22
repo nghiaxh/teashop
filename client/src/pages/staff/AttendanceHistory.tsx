@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Attendance } from '../../types';
+import type { Attendance } from '../../types';
 
 export default function AttendanceHistory() {
   const [attendances, setAttendances] = useState<Attendance[]>([]);

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Ingredient } from '../../types';
+import type { Ingredient } from '../../types';
 
 export default function InventoryManagement() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);

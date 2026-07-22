@@ -7,6 +7,7 @@ import session from 'express-session';
 import connectDB from './config/database';
 import { sessionConfig } from './config/session';
 import { errorHandler } from './middleware/errorHandler';
+import User from './models/User';
 
 import authRoutes from './routes/auth';
 import menuRoutes from './routes/menu';
@@ -35,11 +36,10 @@ app.use(errorHandler);
 const start = async () => {
   await connectDB();
 
-  const User = (await import('./models/User')).default;
   const userCount = await User.countDocuments();
   if (userCount === 0) {
     console.log('No users found, running seed...');
-    const { seedDatabase } = await import('./seed');
+    const { seedDatabase } = await import('./seed.js');
     await seedDatabase();
   }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
-import { Order } from '../../types';
+import type { Order } from '../../types';
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
