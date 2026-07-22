@@ -1,15 +1,29 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Card, Button, Chip, Spinner } from '@heroui/react';
+import { Plus, Pencil, Trash, Package } from '@phosphor-icons/react';
 import api from '../../api/axios';
 import type { Product } from '../../types';
-import { Plus, X, Pencil, Trash } from '@phosphor-icons/react';
-import { Spinner } from '@heroui/react';
+import { useToast } from '../../contexts/ToastContext';
+import Modal from '../../components/ui/Modal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 const categoryLabels: Record<string, string> = {
   'tra-sua': 'Trà Sữa',
   'tra-trai-cay': 'Trà Trái Cây',
   'ca-phe': 'Cà Phê',
   'da-xay': 'Đá Xay',
-  'topping': 'Topping'
+  'topping': 'Topping',
+};
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 6 },
+  show: { opacity: 1, y: 0 },
 };
 
 export default function MenuManagement() {
@@ -17,60 +31,72 @@ export default function MenuManagement() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    category: 'tra-sua' as string,
-    price: 0
-  });
+  const [formData, setFormData] = useState({ name: '', category: 'tra-sua' as string, price: 0 });
+  const [formErrors, setFormErrors] = useState<{ name?: string; price?: string }>({});
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
     try {
       const res = await api.get('/menu');
       setProducts(res.data.products);
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
+    } catch {
+      showToast('Không thể tải danh sách sản phẩm', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  const validate = () => {
+    const errors: typeof formErrors = {};
+    if (!formData.name.trim()) errors.name = 'Tên sản phẩm không được để trống';
+    if (formData.price <= 0) errors.price = 'Giá phải lớn hơn 0';
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async () => {
+    if (!validate()) return;
     try {
       if (editingProduct) {
         await api.put(`/menu/${editingProduct._id}`, formData);
+        showToast('Cập nhật sản phẩm thành công', 'success');
       } else {
         await api.post('/menu', formData);
+        showToast('Thêm sản phẩm thành công', 'success');
       }
       fetchProducts();
-      setEditingProduct(null);
-      setIsCreating(false);
-      setFormData({ name: '', category: 'tra-sua', price: 0 });
-    } catch (error) {
-      console.error('Failed to save product:', error);
+      closeModal();
+    } catch (error: any) {
+      showToast(error.response?.data?.error || 'Lưu sản phẩm thất bại', 'error');
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc muốn xóa?')) return;
+  const handleDelete = async () => {
+    if (!deletingProduct) return;
     try {
-      await api.delete(`/menu/${id}`);
+      await api.delete(`/menu/${deletingProduct._id}`);
       fetchProducts();
-    } catch (error) {
-      console.error('Failed to delete product:', error);
+      setDeletingProduct(null);
+      showToast('Xóa sản phẩm thành công', 'success');
+    } catch (error: any) {
+      showToast(error.response?.data?.error || 'Xóa sản phẩm thất bại', 'error');
     }
   };
 
   const startEdit = (product: Product) => {
     setEditingProduct(product);
-    setFormData({
-      name: product.name,
-      category: product.category,
-      price: product.price
-    });
+    setFormData({ name: product.name, category: product.category, price: product.price });
+    setFormErrors({});
+  };
+
+  const closeModal = () => {
+    setEditingProduct(null);
+    setIsCreating(false);
+    setFormData({ name: '', category: 'tra-sua', price: 0 });
+    setFormErrors({});
   };
 
   if (loading) {
@@ -81,141 +107,143 @@ export default function MenuManagement() {
     );
   }
 
+  const modalOpen = !!editingProduct || isCreating;
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-foreground">Quản lý Menu</h2>
-        <button
-          className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1"
-          onClick={() => setIsCreating(true)}
+        <h2 className="text-2xl font-semibold tracking-tight">Quản lý Menu</h2>
+        <Button
+          variant="primary"
+          onClick={() => { setIsCreating(true); setFormErrors({}); }}
         >
           <Plus size={16} />
           Thêm sản phẩm
-        </button>
+        </Button>
       </div>
 
-      <div className="bg-white rounded-xl border border-divider overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-divider">
-                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Tên</th>
-                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Danh mục</th>
-                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Giá</th>
-                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Trạng thái</th>
-                <th className="text-left px-4 py-3 text-foreground/60 font-medium">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(product => (
-                <tr key={product._id} className="border-b border-divider/50 hover:bg-content2/50 transition-colors">
-                  <td className="px-4 py-3 font-medium text-sm">{product.name}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center h-5 px-2 rounded-full text-xs font-medium border border-divider text-foreground/70">
-                      {categoryLabels[product.category] || product.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm">{product.price.toLocaleString('vi-VN')}đ</td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center h-5 px-2 rounded-full text-xs font-medium ${
-                      product.isActive ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'
-                    }`}>
-                      {product.isActive ? 'Đang bán' : 'Ngừng bán'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-1">
-                      <button className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-content2 transition-colors" onClick={() => startEdit(product)}>
-                        <Pencil size={14} />
-                      </button>
-                      <button className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-danger/10 text-danger transition-colors" onClick={() => handleDelete(product._id)}>
-                        <Trash size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {(editingProduct || isCreating) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { setEditingProduct(null); setIsCreating(false); }} />
-          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg text-foreground">
-                {editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
-              </h3>
-              <button
-                className="h-8 w-8 rounded-lg flex items-center justify-center hover:bg-content2 transition-colors"
-                onClick={() => { setEditingProduct(null); setIsCreating(false); }}
-              >
-                <X size={18} />
-              </button>
+      {products.length === 0 ? (
+        <Card className="p-12 flex flex-col items-center justify-center text-center">
+          <Package size={40} className="text-foreground/30 mb-3" />
+          <p className="text-foreground/50">Chưa có sản phẩm nào</p>
+        </Card>
+      ) : (
+        <motion.div variants={container} initial="hidden" animate="show">
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-divider">
+                    <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Tên</th>
+                    <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Danh mục</th>
+                    <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Giá</th>
+                    <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Trạng thái</th>
+                    <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map((product) => (
+                    <motion.tr
+                      key={product._id}
+                      variants={item}
+                      className="border-b border-divider/50 last:border-b-0 hover:bg-content2/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 font-medium">{product.name}</td>
+                      <td className="px-4 py-3">
+                        <Chip size="sm" variant="soft" color="default">
+                          {categoryLabels[product.category] || product.category}
+                        </Chip>
+                      </td>
+                      <td className="px-4 py-3">{product.price.toLocaleString('vi-VN')}đ</td>
+                      <td className="px-4 py-3">
+                        <Chip size="sm" variant="soft" color={product.isActive ? 'success' : 'danger'}>
+                          {product.isActive ? 'Đang bán' : 'Ngừng bán'}
+                        </Chip>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <Button isIconOnly size="sm" variant="ghost" onClick={() => startEdit(product)} aria-label="Sửa">
+                            <Pencil size={14} />
+                          </Button>
+                          <Button isIconOnly size="sm" variant="danger-soft" onClick={() => setDeletingProduct(product)} aria-label="Xóa">
+                            <Trash size={14} />
+                          </Button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          </Card>
+        </motion.div>
+      )}
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Tên sản phẩm
-                </label>
-                <input
-                  type="text"
-                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
+      <Modal
+        open={modalOpen}
+        onClose={closeModal}
+        title={editingProduct ? 'Sửa sản phẩm' : 'Thêm sản phẩm mới'}
+        footer={
+          <>
+            <Button variant="outline" onClick={closeModal}>Hủy</Button>
+            <Button variant="primary" onClick={handleSubmit}>
+              {editingProduct ? 'Cập nhật' : 'Thêm mới'}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Tên sản phẩm <span className="text-danger">*</span>
+            </label>
+            <input
+              type="text"
+              className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            />
+            {formErrors.name && <p className="text-xs text-danger mt-1">{formErrors.name}</p>}
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Danh mục
-                </label>
-                <select
-                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                >
-                  <option value="tra-sua">Trà Sữa</option>
-                  <option value="tra-trai-cay">Trà Trái Cây</option>
-                  <option value="ca-phe">Cà Phê</option>
-                  <option value="da-xay">Đá Xay</option>
-                  <option value="topping">Topping</option>
-                </select>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">Danh mục</label>
+            <select
+              className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            >
+              <option value="tra-sua">Trà Sữa</option>
+              <option value="tra-trai-cay">Trà Trái Cây</option>
+              <option value="ca-phe">Cà Phê</option>
+              <option value="da-xay">Đá Xay</option>
+              <option value="topping">Topping</option>
+            </select>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1.5">
-                  Giá (VNĐ)
-                </label>
-                <input
-                  type="number"
-                  className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                className="h-10 px-4 rounded-lg border border-divider bg-white text-foreground text-sm font-medium hover:bg-content2 transition-colors"
-                onClick={() => { setEditingProduct(null); setIsCreating(false); }}
-              >
-                Hủy
-              </button>
-              <button
-                className="h-10 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors"
-                onClick={handleSubmit}
-              >
-                {editingProduct ? 'Cập nhật' : 'Thêm mới'}
-              </button>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Giá (VNĐ) <span className="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              value={formData.price}
+              onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+            />
+            {formErrors.price && <p className="text-xs text-danger mt-1">{formErrors.price}</p>}
           </div>
         </div>
-      )}
+      </Modal>
+
+      <ConfirmDialog
+        open={!!deletingProduct}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={handleDelete}
+        title="Xóa sản phẩm"
+        message={`Bạn có chắc muốn xóa "${deletingProduct?.name}"?`}
+        confirmLabel="Xóa"
+      />
     </div>
   );
 }

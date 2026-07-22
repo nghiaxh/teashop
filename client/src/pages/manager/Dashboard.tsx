@@ -1,49 +1,45 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Card, Spinner } from '@heroui/react';
+import { BookOpen, Package, Users, CalendarCheck, ChartBar, ShoppingBag, CurrencyDollar, Clock, CheckCircle } from '@phosphor-icons/react';
 import api from '../../api/axios';
-import { Spinner } from '@heroui/react';
-import {
-  ShoppingBag,
-  CurrencyDollar,
-  Clock,
-  CheckCircle,
-  BookOpen,
-  Package,
-  Users,
-  CalendarCheck,
-  ChartBar,
-} from '@phosphor-icons/react';
+import type { Order } from '../../types';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0 },
+};
+
+const navLinks = [
+  { to: '/manager/menu', label: 'Quản lý Menu', icon: BookOpen },
+  { to: '/manager/inventory', label: 'Quản lý Kho', icon: Package },
+  { to: '/manager/accounts', label: 'Quản lý Nhân viên', icon: Users },
+  { to: '/manager/attendance', label: 'Quản lý Chấm công', icon: CalendarCheck },
+  { to: '/manager/reports', label: 'Báo cáo', icon: ChartBar },
+];
 
 export default function ManagerDashboard() {
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    completedOrders: 0
-  });
+  const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pendingOrders: 0, completedOrders: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
-    try {
-      const res = await api.get('/orders');
-      const orders = res.data.orders;
-
+    api.get('/orders').then((res) => {
+      const orders: Order[] = res.data.orders || [];
       setStats({
         totalOrders: orders.length,
-        totalRevenue: orders.reduce((sum: number, o: any) => sum + o.totalAmount, 0),
-        pendingOrders: orders.filter((o: any) => o.status === 'pending').length,
-        completedOrders: orders.filter((o: any) => o.status === 'completed').length
+        totalRevenue: orders.filter((o) => o.status === 'completed').reduce((s, o) => s + o.totalAmount, 0),
+        pendingOrders: orders.filter((o) => o.status === 'pending').length,
+        completedOrders: orders.filter((o) => o.status === 'completed').length,
       });
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
-    } finally {
       setLoading(false);
-    }
-  };
+    }).catch(() => setLoading(false));
+  }, []);
 
   if (loading) {
     return (
@@ -54,87 +50,72 @@ export default function ManagerDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">Tổng quan</h2>
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8">
+      <motion.div variants={item}>
+        <h1 className="text-2xl font-semibold tracking-tight">Tổng quan</h1>
+        <p className="text-sm text-foreground/50 mt-1">Quản lý cửa hàng của bạn</p>
+      </motion.div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-divider p-4">
+      <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <ShoppingBag size={20} className="text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center">
+              <ShoppingBag size={18} weight="light" />
             </div>
             <div>
               <p className="text-xs text-foreground/50">Tổng đơn</p>
-              <p className="text-xl font-bold text-foreground">{stats.totalOrders}</p>
+              <p className="text-xl font-semibold tracking-tight">{stats.totalOrders}</p>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-divider p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-              <CurrencyDollar size={20} className="text-secondary" />
+            <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+              <CurrencyDollar size={18} className="text-success" weight="light" />
             </div>
             <div>
               <p className="text-xs text-foreground/50">Doanh thu</p>
-              <p className="text-xl font-bold text-foreground">
-                {stats.totalRevenue.toLocaleString('vi-VN')}đ
-              </p>
+              <p className="text-xl font-semibold tracking-tight">{stats.totalRevenue.toLocaleString('vi-VN')}đ</p>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-divider p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <Clock size={20} className="text-warning" />
+            <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+              <Clock size={18} className="text-warning" weight="light" />
             </div>
             <div>
-              <p className="text-xs text-foreground/50">Đang chờ</p>
-              <p className="text-xl font-bold text-foreground">{stats.pendingOrders}</p>
+              <p className="text-xs text-foreground/50">Chờ xử lý</p>
+              <p className="text-xl font-semibold tracking-tight">{stats.pendingOrders}</p>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-divider p-4">
+        </Card>
+        <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <CheckCircle size={20} className="text-success" />
+            <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
+              <CheckCircle size={18} className="text-success" weight="light" />
             </div>
             <div>
               <p className="text-xs text-foreground/50">Hoàn thành</p>
-              <p className="text-xl font-bold text-foreground">{stats.completedOrders}</p>
+              <p className="text-xl font-semibold tracking-tight">{stats.completedOrders}</p>
             </div>
           </div>
+        </Card>
+      </motion.div>
+
+      <motion.div variants={item}>
+        <h2 className="text-lg font-semibold tracking-tight mb-4">Truy cập nhanh</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {navLinks.map((link) => (
+            <Card key={link.to} className="p-4 hover:border-primary/50 transition-colors">
+              <Link to={link.to} className="flex items-center gap-3 w-full h-auto py-1">
+                <link.icon size={18} weight="light" />
+                <span className="font-medium text-sm">{link.label}</span>
+              </Link>
+            </Card>
+          ))}
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-        <Link to="/manager/menu" className="bg-white rounded-xl border border-divider p-4 hover:border-primary/50 transition-colors">
-          <BookOpen size={20} className="text-primary mb-2" />
-          <p className="text-sm font-medium text-foreground">Quản lý Menu</p>
-        </Link>
-
-        <Link to="/manager/inventory" className="bg-white rounded-xl border border-divider p-4 hover:border-primary/50 transition-colors">
-          <Package size={20} className="text-primary mb-2" />
-          <p className="text-sm font-medium text-foreground">Quản lý Kho</p>
-        </Link>
-
-        <Link to="/manager/accounts" className="bg-white rounded-xl border border-divider p-4 hover:border-primary/50 transition-colors">
-          <Users size={20} className="text-primary mb-2" />
-          <p className="text-sm font-medium text-foreground">Nhân viên</p>
-        </Link>
-
-        <Link to="/manager/attendance" className="bg-white rounded-xl border border-divider p-4 hover:border-primary/50 transition-colors">
-          <CalendarCheck size={20} className="text-primary mb-2" />
-          <p className="text-sm font-medium text-foreground">Chấm công</p>
-        </Link>
-
-        <Link to="/manager/reports" className="bg-white rounded-xl border border-divider p-4 hover:border-primary/50 transition-colors">
-          <ChartBar size={20} className="text-primary mb-2" />
-          <p className="text-sm font-medium text-foreground">Báo cáo</p>
-        </Link>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

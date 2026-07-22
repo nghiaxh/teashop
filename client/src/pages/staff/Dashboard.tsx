@@ -2,28 +2,21 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
 import type { Attendance } from '../../types';
+import { useToast } from '../../contexts/ToastContext';
+import StatCard from '../../components/ui/StatCard';
+import LoadingState from '../../components/ui/LoadingState';
 import { Spinner } from '@heroui/react';
-import {
-  ShoppingBag,
-  CheckCircle,
-  CurrencyDollar,
-  PlusCircle,
-} from '@phosphor-icons/react';
+import { ShoppingBag, CheckCircle, CurrencyDollar, PlusCircle } from '@phosphor-icons/react';
 
 export default function Dashboard() {
-  const [todayStats, setTodayStats] = useState({
-    orders: 0,
-    completed: 0,
-    revenue: 0,
-  });
+  const [todayStats, setTodayStats] = useState({ orders: 0, completed: 0, revenue: 0 });
   const [attendance, setAttendance] = useState<Attendance | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [checkOutLoading, setCheckOutLoading] = useState(false);
+  const { showToast } = useToast();
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useEffect(() => { fetchDashboardData(); }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -50,7 +43,7 @@ export default function Dashboard() {
       );
       setAttendance(todayAttendance || null);
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
+      showToast('Không thể tải dữ liệu bảng điều khiển', 'error');
     } finally {
       setLoading(false);
     }
@@ -61,8 +54,9 @@ export default function Dashboard() {
     try {
       await api.post('/attendance/check-in');
       await fetchDashboardData();
+              showToast('Vào ca thành công', 'success');
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Check-in failed');
+      showToast(error.response?.data?.error || 'Vào ca thất bại', 'error');
     } finally {
       setCheckInLoading(false);
     }
@@ -73,66 +67,51 @@ export default function Dashboard() {
     try {
       await api.post('/attendance/check-out');
       await fetchDashboardData();
+      showToast('Tan ca thành công', 'success');
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Check-out failed');
+      showToast(error.response?.data?.error || 'Tan ca thất bại', 'error');
     } finally {
       setCheckOutLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
+  if (loading) return <LoadingState />;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">Dashboard</h2>
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl border border-divider p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <ShoppingBag size={20} className="text-primary" />
-            </div>
-            <div>
-              <p className="text-xs text-foreground/50">Đơn hôm nay</p>
-              <p className="text-xl font-bold text-foreground">{todayStats.orders}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-divider p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <CheckCircle size={20} className="text-success" />
-            </div>
-            <div>
-              <p className="text-xs text-foreground/50">Hoàn thành</p>
-              <p className="text-xl font-bold text-foreground">{todayStats.completed}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-divider p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center">
-              <CurrencyDollar size={20} className="text-secondary" />
-            </div>
-            <div>
-              <p className="text-xs text-foreground/50">Doanh thu</p>
-              <p className="text-xl font-bold text-foreground">
-                {todayStats.revenue.toLocaleString('vi-VN')}đ
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">Bảng điều khiển</h2>
+        <Link
+          to="/orders/new"
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all duration-150"
+        >
+          <PlusCircle size={16} />
+          Tạo đơn mới
+        </Link>
       </div>
 
-      <div className="bg-white rounded-xl border border-divider p-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          icon={<ShoppingBag size={20} />}
+          label="Đơn hôm nay"
+          value={todayStats.orders}
+          color="primary"
+        />
+        <StatCard
+          icon={<CheckCircle size={20} />}
+          label="Hoàn thành"
+          value={todayStats.completed}
+          color="success"
+        />
+        <StatCard
+          icon={<CurrencyDollar size={20} />}
+          label="Doanh thu"
+          value={`${todayStats.revenue.toLocaleString('vi-VN')}đ`}
+          color="secondary"
+        />
+      </div>
+
+      <div className="bg-content1 rounded-xl border border-divider p-5">
         <h3 className="font-semibold text-foreground mb-3">Chấm Công</h3>
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
           <div className="flex-1">
@@ -146,43 +125,36 @@ export default function Dashboard() {
               Trạng thái:{' '}
               {attendance ? (
                 <span className="inline-flex items-center gap-1 text-success font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
-                  Đã check-in
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                  Đã vào ca
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1 text-warning font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-warning"></span>
-                  Chưa check-in
+                  <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+                  Chưa vào ca
                 </span>
               )}
             </p>
           </div>
           <div className="flex gap-2">
             <button
-              className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center"
+              className="h-9 px-4 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 flex items-center justify-center"
               onClick={handleCheckIn}
               disabled={!!attendance || checkInLoading}
             >
-              {checkInLoading ? <Spinner size="sm" color="current" /> : 'Check-in'}
+              {checkInLoading ? <Spinner size="sm" color="current" /> : 'Vào ca'}
             </button>
             <button
               className="h-9 px-4 rounded-lg border border-divider bg-white text-foreground text-sm font-medium hover:bg-content2 transition-colors disabled:opacity-50 flex items-center justify-center"
               onClick={handleCheckOut}
               disabled={!attendance || checkOutLoading}
             >
-              {checkOutLoading ? <Spinner size="sm" /> : 'Check-out'}
+              {checkOutLoading ? <Spinner size="sm" /> : 'Tan ca'}
             </button>
           </div>
         </div>
       </div>
 
-      <Link
-        to="/orders/new"
-        className="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors"
-      >
-        <PlusCircle size={18} />
-        Tạo đơn mới
-      </Link>
     </div>
   );
 }
