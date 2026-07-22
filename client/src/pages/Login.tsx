@@ -2,71 +2,86 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { BowlSteam } from '@phosphor-icons/react';
+import { useToast } from '../contexts/ToastContext';
 import { Spinner } from '@heroui/react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState<{ username?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+
+  const validate = () => {
+    const errors: typeof formErrors = {};
+    if (!username.trim()) errors.username = 'Tên đăng nhập không được để trống';
+    if (!password.trim()) errors.password = 'Mật khẩu không được để trống';
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setError('');
     setLoading(true);
 
     try {
-      await login(username, password);
-      navigate('/');
+      const user = await login(username, password);
+      navigate(user.role === 'manager' ? '/manager' : '/');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Đăng nhập thất bại');
+      const message = err.response?.data?.error || 'Đăng nhập thất bại';
+      setError(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-content2 px-4">
+    <div className="min-h-dvh flex items-center justify-center bg-content2 px-4">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-            <BowlSteam size={32} weight="bold" className="text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground tracking-tight">TeaShop</h1>
-          <p className="text-sm text-foreground/50 mt-1">POS Management System</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-divider p-6 shadow-sm shadow-black/[0.03]">
+        <div className="bg-white rounded-2xl border border-divider p-6 shadow-sm shadow-black/3">
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Username
+                Tên đăng nhập
               </label>
               <input
                 type="text"
-                placeholder="Nhập username"
-                className="w-full h-11 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                placeholder="Nhập tên đăng nhập"
+                className={`w-full h-11 px-3 rounded-lg border bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors ${
+                  formErrors.username ? 'border-danger' : 'border-divider'
+                }`}
                 value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  if (formErrors.username) setFormErrors((prev) => ({ ...prev, username: undefined }));
+                }}
               />
+              {formErrors.username && <p className="text-xs text-danger mt-1">{formErrors.username}</p>}
             </div>
 
             <div className="mb-5">
               <label className="block text-sm font-medium text-foreground mb-1.5">
-                Password
+                Mật khẩu
               </label>
               <input
                 type="password"
-                placeholder="Nhập password"
-                className="w-full h-11 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                placeholder="Nhập mật khẩu"
+                className={`w-full h-11 px-3 rounded-lg border bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors ${
+                  formErrors.password ? 'border-danger' : 'border-divider'
+                }`}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (formErrors.password) setFormErrors((prev) => ({ ...prev, password: undefined }));
+                }}
               />
+              {formErrors.password && <p className="text-xs text-danger mt-1">{formErrors.password}</p>}
             </div>
 
             {error && (
@@ -87,12 +102,6 @@ export default function Login() {
               )}
             </button>
           </form>
-        </div>
-
-        <div className="mt-6 text-center">
-          <p className="text-[11px] text-foreground/40">
-            Staff: staff01-15 | Manager: manager01-03 | Pass: 123456
-          </p>
         </div>
       </div>
     </div>
