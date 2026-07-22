@@ -11,7 +11,7 @@ A modern Point of Sale (POS) management system for tea and coffee shops, built w
 | Router | React Router | 7.18.1 |
 | Build | Vite | 8.1.5 |
 | CSS | Tailwind CSS | 4.x |
-| UI | DaisyUI | 5.7.0 |
+| UI | HeroUI | 3.2.2 |
 | Backend | Express | 5.2.1 |
 | ODM | Mongoose | 9.8.0 |
 | Auth | express-session | latest |

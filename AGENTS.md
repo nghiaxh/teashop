@@ -8,25 +8,36 @@ TeaShop is a POS management system for tea/coffee shops. Full-stack TypeScript a
 
 ```
 teashop/
+├── .env / .env.example      # Environment variables
 ├── docker-compose.yml        # 3 services: client, server, database
 ├── client/                   # React + Vite + Tailwind + DaisyUI
 │   ├── src/
-│   │   ├── api/              # Axios instance
-│   │   ├── components/       # Reusable UI components
-│   │   ├── contexts/         # Auth context
-│   │   ├── hooks/            # Custom hooks (usePagination)
-│   │   ├── pages/            # Page components
-│   │   │   ├── staff/        # Staff pages (Dashboard, CreateOrder, OrderHistory, AttendanceHistory)
-│   │   │   └── manager/      # Manager pages (Dashboard, Menu, Inventory, Accounts, Attendance, Reports)
-│   │   └── types/            # TypeScript interfaces
+│   │   ├── api/              # Axios instance (axios.ts)
+│   │   ├── assets/           # Static assets (hero.png, icons)
+│   │   ├── components/
+│   │   │   ├── Layout/       # DashboardLayout, Sidebar
+│   │   │   ├── ui/           # Badge, ConfirmDialog, DataTable, EmptyState, FormField, LoadingState, Modal, Skeleton, StatCard
+│   │   │   ├── Pagination.tsx
+│   │   │   ├── ProtectedRoute.tsx
+│   │   │   └── ManagerRoute.tsx
+│   │   ├── contexts/         # AuthContext, ToastContext
+│   │   ├── hooks/            # usePagination
+│   │   ├── pages/
+│   │   │   ├── Login.tsx
+│   │   │   ├── NotFound.tsx
+│   │   │   ├── staff/        # Dashboard, CreateOrder, OrderHistory, AttendanceHistory, Profile
+│   │   │   └── manager/      # Dashboard, MenuManagement, InventoryManagement, AccountManagement, AttendanceManagement, Reports
+│   │   └── types/            # TypeScript interfaces (index.ts)
 │   └── package.json
 └── server/                   # Express + Mongoose
     ├── src/
-    │   ├── config/           # Database, session config
-    │   ├── middleware/        # Auth, error handler
-    │   ├── models/           # Mongoose schemas
-    │   ├── routes/           # API routes
-    │   └── utils/            # Business logic (calculateOrderTotal, updateInventoryOnOrder)
+    │   ├── config/           # database.ts, session.ts
+    │   ├── middleware/        # auth.ts, errorHandler.ts
+    │   ├── models/           # Attendance, Ingredient, Order, Product, User
+    │   ├── routes/           # attendance, auth, inventory, menu, orders
+    │   ├── types/            # express-session.d.ts
+    │   └── utils/            # calculateOrderTotal.ts, updateInventoryOnOrder.ts
+    ├── seed.ts               # Database seeding script
     └── package.json
 ```
 
@@ -34,18 +45,11 @@ teashop/
 
 | File | Purpose |
 |------|---------|
-| `server/src/utils/calculateOrderTotal.ts` | **CR01 BUG** - Calculate order total |
-| `server/src/utils/updateInventoryOnOrder.ts` | **CR02 BUG** - Deduct inventory |
-| `server/src/routes/orders.ts` | **PR01 BUG** - Orders API (no pagination) |
-| `client/src/pages/staff/CreateOrder.tsx` | **PR02 BUG** - POS page (no search/filter) |
-| `client/src/pages/staff/OrderHistory.tsx` | **PR01 BUG** - Order history (no pagination) |
-
-## Known Bugs (See NOTES.md)
-
-1. **CR01** - Order total doesn't include topping prices
-2. **CR02** - Inventory not adjusted by size multiplier
-3. **PR01** - No pagination on order history
-4. **PR02** - No search/filter on POS menu
+| `server/src/utils/calculateOrderTotal.ts` | Calculate order total |
+| `server/src/utils/updateInventoryOnOrder.ts` | Deduct inventory on order |
+| `server/src/routes/orders.ts` | Orders API endpoints |
+| `client/src/pages/staff/CreateOrder.tsx` | POS page |
+| `client/src/pages/staff/OrderHistory.tsx` | Order history page |
 
 ## Development Commands
 
@@ -76,8 +80,7 @@ docker compose down  # Stop all services
 
 ## Git Branches
 
-- `main` - Main branch (contains bugs)
-- `fix/cr01-topping-price` - Fix CR01
-- `fix/cr02-size-inventory` - Fix CR02
-- `fix/pr01-order-pagination` - Fix PR01
-- `fix/pr02-menu-search` - Fix PR02
+- `main` - Main branch
+- `bugs-fixed` - Bug fixes branch
+- `feature/heroui-migration` - HeroUI migration feature
+- `feature/ui-redesign` - UI redesign feature
