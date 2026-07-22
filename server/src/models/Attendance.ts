@@ -9,6 +9,7 @@ export interface IAttendance extends Document {
   isLate: boolean;
   hoursWorked: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const attendanceSchema = new Schema<IAttendance>({
@@ -18,9 +19,8 @@ const attendanceSchema = new Schema<IAttendance>({
   checkIn: { type: Date, required: true },
   checkOut: { type: Date, default: null },
   isLate: { type: Boolean, default: false },
-  hoursWorked: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
-});
+  hoursWorked: { type: Number, default: 0 }
+}, { timestamps: true });
 
 attendanceSchema.index({ userId: 1, date: 1, shift: 1 }, { unique: true });
 

@@ -24,6 +24,7 @@ export interface IProduct extends Document {
   ingredients: IProductIngredient[];
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 const productSchema = new Schema<IProduct>({
@@ -48,8 +49,7 @@ const productSchema = new Schema<IProduct>({
     ingredientId: { type: Schema.Types.ObjectId, ref: 'Ingredient', required: true },
     baseQuantity: { type: Number, required: true, min: 0 }
   }],
-  isActive: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
+  isActive: { type: Boolean, default: true }
+}, { timestamps: true });
 
 export default mongoose.model<IProduct>('Product', productSchema);
