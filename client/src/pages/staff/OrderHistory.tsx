@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import type { Order } from '../../types';
-import Pagination from '../../components/Pagination';
-import { usePagination } from '../../hooks/usePagination';
 import Badge from '../../components/ui/Badge';
 import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
@@ -19,30 +17,16 @@ const statusMap: Record<string, { label: string; variant: 'success' | 'warning' 
 export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const limit = 20;
 
-  const {
-    currentPage,
-    totalPages,
-    paginationRange,
-    goToPage,
-    goToNextPage,
-    goToPreviousPage,
-    hasNextPage,
-    hasPreviousPage
-  } = usePagination({ totalItems: total, itemsPerPage: limit });
-
-  useEffect(() => { fetchOrders(); }, [currentPage]);
+  useEffect(() => { fetchOrders(); }, []);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const res = await api.get(`/orders?page=${currentPage}&limit=${limit}`);
+      const res = await api.get('/orders');
       setOrders(res.data.orders);
-      setTotal(res.data.total || 0);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
@@ -74,11 +58,6 @@ export default function OrderHistory() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground tracking-tight">Lịch sử đơn hàng</h2>
-        {total > 0 && (
-          <p className="text-sm text-foreground/50">
-            Hiển thị {Math.min((currentPage - 1) * limit + 1, total)}-{Math.min(currentPage * limit, total)} / {total} đơn
-          </p>
-        )}
       </div>
 
       {orders.length === 0 ? (
@@ -103,7 +82,7 @@ export default function OrderHistory() {
               <tbody>
                 {orders.map((order, index) => (
                   <tr key={order._id} className="border-b border-divider/50 last:border-b-0 hover:bg-content2/50 transition-colors">
-                    <td className="px-4 py-3 text-foreground/50">{(currentPage - 1) * limit + index + 1}</td>
+                    <td className="px-4 py-3 text-foreground/50">{index + 1}</td>
                     <td className="px-4 py-3">
                       {order.items.map((item, i) => (
                         <div key={i} className="text-sm">{item.quantity}x {item.productName}</div>
@@ -147,21 +126,6 @@ export default function OrderHistory() {
               </tbody>
             </table>
           </div>
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="flex justify-center">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            paginationRange={paginationRange}
-            onPageChange={goToPage}
-            onPrevious={goToPreviousPage}
-            onNext={goToNextPage}
-            hasNext={hasNextPage}
-            hasPrevious={hasPreviousPage}
-          />
         </div>
       )}
 

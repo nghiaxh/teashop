@@ -393,158 +393,54 @@ router.put("/:id/status", requireAuth, requireManager, async (req: AuthRequest, 
 
 ---
 
-## PR03 — Dashboard & Reports thiếu endpoint thống kê riêng
+## PR03 — Menu chưa có tìm kiếm / lọc
 
 ### Mô tả
 
-Cả trang Dashboard (`/manager/dashboard`) và Reports (`/manager/reports`) đều gọi `GET /api/orders` lấy toàn bộ đơn hàng để tự tính thống kê ở client-side. Khi PR01 (phân trang) được fix, API chỉ trả 20 đơn → thống kê **sai hoàn toàn**.
+Trang POS (CreateOrder) hiển thị toàn bộ danh sách món mà không có ô tìm kiếm hay bộ lọc theo danh mục.
 
 ### File bị ảnh hưởng
 
-- `server/src/routes/orders.ts` (thiếu endpoint `/orders/stats`)
-- `client/src/pages/manager/Dashboard.tsx`
-- `client/src/pages/manager/Reports.tsx`
+- `client/src/pages/staff/CreateOrder.tsx`
 
 ### Code hiện tại (sai)
 
-**Dashboard.tsx:**
-
-```typescript
-useEffect(() => {
-  api
-    .get("/orders")
-    .then((res) => {
-      const orders: Order[] = res.data.orders || [];
-      setStats({
-        totalOrders: orders.length,
-        totalRevenue: orders.filter((o) => o.status === "completed").reduce((s, o) => s + o.totalAmount, 0),
-        pendingOrders: orders.filter((o) => o.status === "pending").length,
-        completedOrders: orders.filter((o) => o.status === "completed").length,
-      });
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-}, []);
-```
-
-**Reports.tsx:**
-
-```typescript
-useEffect(() => {
-  api
-    .get("/orders")
-    .then((res) => {
-      const orders = res.data.orders;
-      const completed = orders.filter((o: any) => o.status === "completed");
-      const totalRevenue = completed.reduce((sum: number, o: any) => sum + o.totalAmount, 0);
-      setStats({
-        totalOrders: orders.length,
-        totalRevenue,
-        avgOrderValue: completed.length > 0 ? totalRevenue / completed.length : 0,
-        completedOrders: completed.length,
-      });
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-}, []);
+```tsx
+const filteredProducts = products.filter((p) => {
+  return selectedCategory === "all" || p.category === selectedCategory;
+});
+// Không có search, chỉ filter theo category
 ```
 
 ### Cách reproduce
 
-1. Seed database với 350+ đơn hàng
-2. Fix PR01 (thêm phân trang server-side, mỗi trang 20 đơn)
-3. Vào trang Dashboard → thống kê chỉ hiển thị dữ liệu từ 20 đơn đầu tiên
-4. Tổng đơn hiển thị 20 thay vì 350+, doanh thu sai
+1. Vào trang Tạo đơn hàng
+2. Thấy danh sách dài, phải cuộn tìm thủ công
+3. Không thể search theo tên món
 
 ### Cách fix
 
-**Server — Thêm endpoint `/orders/stats`:**
+Thêm state `search`, ô input search, và filter kết hợp:
 
-```typescript
-router.get("/stats", requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
-  const filter: any = {};
+```tsx
+const [search, setSearch] = useState("");
+const [selectedCategory, setSelectedCategory] = useState<CategoryType>("all");
 
-  if (req.user?.role === "staff") {
-    filter.userId = req.user.id;
-  }
-
-  const stats = await Order.aggregate([
-    { $match: filter },
-    {
-      $group: {
-        _id: "$status",
-        count: { $sum: 1 },
-        revenue: { $sum: "$totalAmount" },
-      },
-    },
-  ]);
-
-  const result = {
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    completedOrders: 0,
-    cancelledOrders: 0,
-    avgOrderValue: 0,
-  };
-
-  for (const stat of stats) {
-    result.totalOrders += stat.count;
-    if (stat._id === "completed") {
-      result.completedOrders = stat.count;
-      result.totalRevenue = stat.revenue;
-    }
-    if (stat._id === "pending") result.pendingOrders = stat.count;
-    if (stat._id === "cancelled") result.cancelledOrders = stat.count;
-  }
-
-  result.avgOrderValue = result.completedOrders > 0 ? Math.round(result.totalRevenue / result.completedOrders) : 0;
-
-  res.json(result);
+const filteredProducts = products.filter((p) => {
+  const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+  const matchCategory = selectedCategory === "all" || p.category === selectedCategory;
+  return matchSearch && matchCategory;
 });
 ```
 
-**Dashboard.tsx — Gọi endpoint stats:**
+Thêm UI:
 
-```typescript
-useEffect(() => {
-  api
-    .get("/orders/stats")
-    .then((res) => {
-      setStats({
-        totalOrders: res.data.totalOrders,
-        totalRevenue: res.data.totalRevenue,
-        pendingOrders: res.data.pendingOrders,
-        completedOrders: res.data.completedOrders,
-      });
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-}, []);
-```
-
-**Reports.tsx — Gọi endpoint stats:**
-
-```typescript
-useEffect(() => {
-  api
-    .get("/orders/stats")
-    .then((res) => {
-      setStats({
-        totalOrders: res.data.totalOrders,
-        totalRevenue: res.data.totalRevenue,
-        avgOrderValue: res.data.avgOrderValue,
-        completedOrders: res.data.completedOrders,
-      });
-      setLoading(false);
-    })
-    .catch(() => setLoading(false));
-}, []);
+```tsx
+<input type="text" placeholder="Tìm kiếm món..." className="input input-bordered w-full mb-4" value={search} onChange={(e) => setSearch(e.target.value)} />
 ```
 
 ### Expected behavior
 
-- Dashboard hiển thị thống kê **chính xác** từ toàn bộ dữ liệu
-- Reports hiển thị doanh thu trung bình, tỷ lệ hoàn thành chính xác
-- API `/orders/stats` trả về kết quả aggregation nhanh, không load toàn bộ documents
-- Khi thêm/xóa đơn hàng, thống kê cập nhật ngay lập tức
+- Có ô search để tìm theo tên món
+- Có category tabs để lọc theo loại
+- Kết quả filter realtime khi gõ

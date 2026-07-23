@@ -6,7 +6,7 @@ import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
-import { MagnifyingGlass, Trash, Pencil, Coffee } from '@phosphor-icons/react';
+import { Trash, Pencil, Coffee } from '@phosphor-icons/react';
 import { Spinner } from '@heroui/react';
 
 interface CartItem {
@@ -30,7 +30,6 @@ const categoryLabels: Record<CategoryType, string> = {
 
 export default function CreateOrder() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>('all');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,9 +59,7 @@ export default function CreateOrder() {
   };
 
   const filteredProducts = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    const matchCategory = selectedCategory === 'all' || p.category === selectedCategory;
-    return matchSearch && matchCategory;
+    return selectedCategory === 'all' || p.category === selectedCategory;
   });
 
   const handleProductClick = (product: Product) => {
@@ -157,19 +154,6 @@ export default function CreateOrder() {
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <div className="flex-1 min-w-0">
-        <div className="mb-4">
-          <div className="relative">
-            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm món..."
-              className="w-full h-10 pl-9 pr-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
         <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
           {Object.entries(categoryLabels).map(([key, label]) => (
             <button
