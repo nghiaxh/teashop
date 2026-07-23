@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Spinner } from '@heroui/react';
-import { ShoppingBag, CurrencyDollar, TrendUp, CheckCircle } from '@phosphor-icons/react';
+import { ShoppingBag, CurrencyDollar, TrendUp, CheckCircle, XCircle, Funnel } from '@phosphor-icons/react';
 import api from '../../api/axios';
+import type { Order } from '../../types';
 
 const container = {
   hidden: { opacity: 0 },
@@ -14,29 +15,79 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+type DateFilter = 'all' | 'today' | 'week' | 'month';
+
+const dateFilterLabels: Record<DateFilter, string> = {
+  all: 'Tất cả',
+  today: 'Hôm nay',
+  week: 'Tuần này',
+  month: 'Tháng này',
+};
+
 export default function Reports() {
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    avgOrderValue: 0,
-    completedOrders: 0,
-  });
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
 
   useEffect(() => {
     api.get('/orders').then((res) => {
-      const orders = res.data.orders;
-      const completed = orders.filter((o: any) => o.status === 'completed');
-      const totalRevenue = completed.reduce((sum: number, o: any) => sum + o.totalAmount, 0);
-      setStats({
-        totalOrders: orders.length,
-        totalRevenue,
-        avgOrderValue: completed.length > 0 ? totalRevenue / completed.length : 0,
-        completedOrders: completed.length,
-      });
+      setOrders(res.data.orders || []);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
+
+  const filteredOrders = useMemo(() => {
+    const now = new Date();
+    return orders.filter((o) => {
+      if (dateFilter === 'all') return true;
+      const d = new Date(o.createdAt);
+      if (dateFilter === 'today') return d.toDateString() === now.toDateString();
+      if (dateFilter === 'week') {
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return d >= weekAgo;
+      }
+      if (dateFilter === 'month') {
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+      return true;
+    });
+  }, [orders, dateFilter]);
+
+  const stats = useMemo(() => {
+    const completed = filteredOrders.filter((o) => o.status === 'completed');
+    const pending = filteredOrders.filter((o) => o.status === 'pending');
+    const cancelled = filteredOrders.filter((o) => o.status === 'cancelled');
+    const totalRevenue = completed.reduce((sum, o) => sum + o.totalAmount, 0);
+
+    return {
+      totalOrders: filteredOrders.length,
+      completedOrders: completed.length,
+      pendingOrders: pending.length,
+      cancelledOrders: cancelled.length,
+      totalRevenue,
+      avgOrderValue: completed.length > 0 ? totalRevenue / completed.length : 0,
+    };
+  }, [filteredOrders]);
+
+  const topProducts = useMemo(() => {
+    const productMap = new Map<string, { name: string; count: number; revenue: number }>();
+    for (const o of filteredOrders) {
+      if (o.status !== 'completed') continue;
+      for (const it of o.items) {
+        const key = it.productName;
+        const existing = productMap.get(key);
+        if (existing) {
+          existing.count += it.quantity;
+          existing.revenue += it.itemTotal;
+        } else {
+          productMap.set(key, { name: it.name || it.productName, count: it.quantity, revenue: it.itemTotal });
+        }
+      }
+    }
+    return Array.from(productMap.values())
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [filteredOrders]);
 
   if (loading) {
     return (
@@ -52,11 +103,26 @@ export default function Reports() {
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      <motion.div variants={item}>
+      <motion.div variants={item} className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold tracking-tight">Báo cáo Doanh thu</h2>
+        <div className="flex gap-2">
+          {(Object.keys(dateFilterLabels) as DateFilter[]).map((key) => (
+            <button
+              key={key}
+              className={`h-8 px-3 rounded-lg text-sm font-medium transition-colors ${
+                dateFilter === key
+                  ? 'bg-primary text-white'
+                  : 'bg-white border border-divider text-foreground hover:bg-content2'
+              }`}
+              onClick={() => setDateFilter(key)}
+            >
+              {dateFilterLabels[key]}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
-      <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center">
@@ -101,6 +167,17 @@ export default function Reports() {
             </div>
           </div>
         </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
+              <XCircle size={18} className="text-danger" weight="light" />
+            </div>
+            <div>
+              <p className="text-xs text-foreground/50">Đã hủy</p>
+              <p className="text-xl font-semibold tracking-tight">{stats.cancelledOrders}</p>
+            </div>
+          </div>
+        </Card>
       </motion.div>
 
       <motion.div variants={item}>
@@ -112,12 +189,46 @@ export default function Reports() {
               <span className="font-medium">{completionRate}%</span>
             </div>
             <div className="flex justify-between items-center py-2 border-b border-content3">
-              <span className="text-sm text-foreground/60">Doanh thu trung bình/đơn</span>
-              <span className="font-medium">{stats.avgOrderValue.toLocaleString('vi-VN')}đ</span>
+              <span className="text-sm text-foreground/60">Tỷ lệ hủy</span>
+              <span className="font-medium">{stats.totalOrders > 0 ? Math.round((stats.cancelledOrders / stats.totalOrders) * 100) : 0}%</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-content3">
+              <span className="text-sm text-foreground/60">Đơn đang chờ</span>
+              <span className="font-medium">{stats.pendingOrders}</span>
             </div>
           </div>
         </Card>
       </motion.div>
+
+      {topProducts.length > 0 && (
+        <motion.div variants={item}>
+          <Card className="p-5">
+            <h3 className="font-semibold tracking-tight mb-4">Top sản phẩm bán chạy</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-divider">
+                    <th className="text-left px-3 py-2 text-foreground/60 font-medium">#</th>
+                    <th className="text-left px-3 py-2 text-foreground/60 font-medium">Sản phẩm</th>
+                    <th className="text-right px-3 py-2 text-foreground/60 font-medium">Đã bán</th>
+                    <th className="text-right px-3 py-2 text-foreground/60 font-medium">Doanh thu</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topProducts.map((p, i) => (
+                    <tr key={i} className="border-b border-divider/50 last:border-b-0">
+                      <td className="px-3 py-2 text-foreground/50">{i + 1}</td>
+                      <td className="px-3 py-2 font-medium">{p.name}</td>
+                      <td className="px-3 py-2 text-right">{p.count}</td>
+                      <td className="px-3 py-2 text-right">{p.revenue.toLocaleString('vi-VN')}đ</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </motion.div>
+      )}
     </motion.div>
   );
 }
