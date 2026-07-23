@@ -8,12 +8,6 @@ import Modal from '../../components/ui/Modal';
 import { Eye } from '@phosphor-icons/react';
 import { Button } from '@heroui/react';
 
-const statusMap: Record<string, { label: string; variant: 'success' | 'warning' | 'danger' | 'neutral' }> = {
-  completed: { label: 'Hoàn thành', variant: 'success' },
-  pending: { label: 'Đang chờ', variant: 'warning' },
-  cancelled: { label: 'Đã hủy', variant: 'danger' },
-};
-
 export default function OrderHistory() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,22 +40,16 @@ export default function OrderHistory() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const info = statusMap[status];
-    if (info) return <Badge variant={info.variant}>{info.label}</Badge>;
-    return <Badge>{status}</Badge>;
-  };
-
   if (loading) return <LoadingState />;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-foreground tracking-tight">Lịch sử đơn hàng</h2>
+        <h2 className="text-2xl font-bold text-foreground tracking-tight">Order History</h2>
       </div>
 
       {orders.length === 0 ? (
-        <EmptyState message="Chưa có đơn hàng nào" />
+        <EmptyState message="No orders yet" />
       ) : (
         <div className="bg-content1 rounded-xl border border-divider overflow-hidden">
           <div className="overflow-x-auto">
@@ -69,13 +57,13 @@ export default function OrderHistory() {
               <thead>
                 <tr className="border-b border-divider">
                   <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">#</th>
-                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Món</th>
+                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Product</th>
                   <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Size</th>
                   <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Topping</th>
-                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Tổng</th>
-                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Ghi chú</th>
-                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Trạng thái</th>
-                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Ngày</th>
+                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Total</th>
+                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Note</th>
+                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Status</th>
+                  <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Date</th>
                   <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium"></th>
                 </tr>
               </thead>
@@ -101,14 +89,16 @@ export default function OrderHistory() {
                       ))}
                     </td>
                     <td className="px-4 py-3 font-semibold text-sm">
-                      {order.totalAmount.toLocaleString('vi-VN')}đ
+                      {order.totalAmount}đ
                     </td>
                     <td className="px-4 py-3 text-sm text-foreground/60 max-w-[120px] truncate" title={order.note}>
                       {order.note || '-'}
                     </td>
-                    <td className="px-4 py-3">{getStatusBadge(order.status)}</td>
+                    <td className="px-4 py-3">
+                      <Badge>{order.status}</Badge>
+                    </td>
                     <td className="px-4 py-3 text-sm text-foreground/60">
-                      {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+                      {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3">
                       <Button
@@ -116,7 +106,7 @@ export default function OrderHistory() {
                         size="sm"
                         variant="ghost"
                         onClick={() => fetchOrderDetail(order._id)}
-                        aria-label="Xem chi tiết"
+                        aria-label="View detail"
                       >
                         <Eye size={14} />
                       </Button>
@@ -132,7 +122,7 @@ export default function OrderHistory() {
       <Modal
         open={!!selectedOrder || detailLoading}
         onClose={() => setSelectedOrder(null)}
-        title={selectedOrder ? `Đơn hàng #${selectedOrder._id.slice(-6).toUpperCase()}` : 'Chi tiết đơn hàng'}
+        title={selectedOrder ? `Order #${selectedOrder._id.slice(-6).toUpperCase()}` : 'Order Detail'}
         maxWidth="sm:max-w-lg"
       >
         {detailLoading && !selectedOrder ? (
@@ -142,39 +132,39 @@ export default function OrderHistory() {
         ) : selectedOrder ? (
           <div className="space-y-4">
             <div className="flex justify-between text-sm">
-              <span className="text-foreground/50">Ngày đặt:</span>
-              <span>{new Date(selectedOrder.createdAt).toLocaleString('vi-VN')}</span>
+              <span className="text-foreground/50">Date:</span>
+              <span>{new Date(selectedOrder.createdAt).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-foreground/50">Nhân viên:</span>
+              <span className="text-foreground/50">Staff:</span>
               <span>{selectedOrder.userId.name}</span>
             </div>
             <div className="flex justify-between text-sm items-center">
-              <span className="text-foreground/50">Trạng thái:</span>
-              {getStatusBadge(selectedOrder.status)}
+              <span className="text-foreground/50">Status:</span>
+              <Badge>{selectedOrder.status}</Badge>
             </div>
             {selectedOrder.note && (
               <div className="text-sm">
-                <span className="text-foreground/50">Ghi chú: </span>
+                <span className="text-foreground/50">Note: </span>
                 <span>{selectedOrder.note}</span>
               </div>
             )}
 
             <div className="border-t border-divider pt-3">
-              <p className="text-sm font-medium text-foreground mb-2">Chi tiết món:</p>
+              <p className="text-sm font-medium text-foreground mb-2">Items:</p>
               <div className="space-y-2">
                 {selectedOrder.items.map((item, i) => (
                   <div key={i} className="p-2.5 bg-content2 rounded-lg text-sm">
                     <div className="flex justify-between font-medium">
                       <span>{item.quantity}x {item.productName}</span>
-                      <span>{item.itemTotal.toLocaleString('vi-VN')}đ</span>
+                      <span>{item.itemTotal}đ</span>
                     </div>
                     <p className="text-foreground/50 mt-1">
-                      Size {item.size} | Đường {item.sugarLevel}% | Đá {item.iceLevel}%
+                      Size {item.size} | Sugar {item.sugarLevel}% | Ice {item.iceLevel}%
                     </p>
                     {item.toppings.length > 0 && (
                       <p className="text-foreground/50">
-                        Topping: {item.toppings.map(t => `${t.name} (+${t.price.toLocaleString('vi-VN')}đ)`).join(', ')}
+                        Topping: {item.toppings.map(t => `${t.name} (+${t.price}đ)`).join(', ')}
                       </p>
                     )}
                   </div>
@@ -183,8 +173,8 @@ export default function OrderHistory() {
             </div>
 
             <div className="border-t border-divider pt-3 flex justify-between font-semibold">
-              <span>Tổng cộng:</span>
-              <span className="text-primary">{selectedOrder.totalAmount.toLocaleString('vi-VN')}đ</span>
+              <span>Total:</span>
+              <span className="text-primary">{selectedOrder.totalAmount}đ</span>
             </div>
           </div>
         ) : null}

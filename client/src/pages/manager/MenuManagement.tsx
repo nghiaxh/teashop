@@ -6,7 +6,6 @@ import api from '../../api/axios';
 import type { Product } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
-import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 const categoryLabels: Record<string, string> = {
   'tra-sua': 'Trà Sữa',
@@ -33,7 +32,6 @@ export default function MenuManagement() {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({ name: '', category: 'tra-sua' as string, price: 0 });
   const [formErrors, setFormErrors] = useState<{ name?: string; price?: string }>({});
-  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => { fetchProducts(); }, []);
@@ -74,12 +72,10 @@ export default function MenuManagement() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!deletingProduct) return;
+  const handleDelete = async (product: Product) => {
     try {
-      await api.delete(`/menu/${deletingProduct._id}`);
+      await api.delete(`/menu/${product._id}`);
       fetchProducts();
-      setDeletingProduct(null);
       showToast('Xóa sản phẩm thành công', 'success');
     } catch (error: any) {
       showToast(error.response?.data?.error || 'Xóa sản phẩm thất bại', 'error');
@@ -165,7 +161,7 @@ export default function MenuManagement() {
                           <Button isIconOnly size="sm" variant="ghost" onClick={() => startEdit(product)} aria-label="Sửa">
                             <Pencil size={14} />
                           </Button>
-                          <Button isIconOnly size="sm" variant="danger-soft" onClick={() => setDeletingProduct(product)} aria-label="Xóa">
+                          <Button isIconOnly size="sm" variant="danger-soft" onClick={() => handleDelete(product)} aria-label="Xóa">
                             <Trash size={14} />
                           </Button>
                         </div>
@@ -235,15 +231,6 @@ export default function MenuManagement() {
           </div>
         </div>
       </Modal>
-
-      <ConfirmDialog
-        open={!!deletingProduct}
-        onClose={() => setDeletingProduct(null)}
-        onConfirm={handleDelete}
-        title="Xóa sản phẩm"
-        message={`Bạn có chắc muốn xóa "${deletingProduct?.name}"?`}
-        confirmLabel="Xóa"
-      />
     </div>
   );
 }

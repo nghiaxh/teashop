@@ -6,7 +6,6 @@ import api from '../../api/axios';
 import type { User } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
-import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 const container = {
   hidden: { opacity: 0 },
@@ -23,7 +22,6 @@ export default function AccountManagement() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({ username: '', password: '', name: '', role: 'staff' as 'staff' | 'manager', phone: '', email: '', gender: '' as '' | 'male' | 'female' | 'other', dateOfBirth: '', hireDate: '' });
   const [editData, setEditData] = useState({ name: '', role: 'staff' as 'staff' | 'manager', phone: '', email: '', gender: '' as '' | 'male' | 'female' | 'other', dateOfBirth: '', hireDate: '' });
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string; name?: string }>({});
@@ -79,12 +77,10 @@ export default function AccountManagement() {
     }
   };
 
-  const handleDeactivate = async () => {
-    if (!deactivatingUser) return;
+  const handleDeactivate = async (user: User) => {
     try {
-      await api.delete(`/auth/${deactivatingUser.id}`);
+      await api.delete(`/auth/${user.id}`);
       fetchUsers();
-      setDeactivatingUser(null);
       showToast('Đã khóa tài khoản', 'success');
     } catch (error: any) {
       showToast(error.response?.data?.error || 'Khóa tài khoản thất bại', 'error');
@@ -195,7 +191,7 @@ export default function AccountManagement() {
                             isIconOnly
                             size="sm"
                             variant="danger-soft"
-                            onClick={() => setDeactivatingUser(user)}
+                            onClick={() => handleDeactivate(user)}
                             aria-label="Khóa"
                             isDisabled={user.role === 'manager'}
                             className={user.role === 'manager' ? 'opacity-50' : ''}
@@ -426,15 +422,6 @@ export default function AccountManagement() {
           </div>
         </div>
       </Modal>
-
-      <ConfirmDialog
-        open={!!deactivatingUser}
-        onClose={() => setDeactivatingUser(null)}
-        onConfirm={handleDeactivate}
-        title="Khóa tài khoản"
-        message={`Bạn có chắc muốn khóa tài khoản "${deactivatingUser?.name}"?`}
-        confirmLabel="Khóa"
-      />
     </div>
   );
 }

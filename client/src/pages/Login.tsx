@@ -9,23 +9,13 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [formErrors, setFormErrors] = useState<{ username?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
-  const validate = () => {
-    const errors: typeof formErrors = {};
-    if (!username.trim()) errors.username = 'Tên đăng nhập không được để trống';
-    if (!password.trim()) errors.password = 'Mật khẩu không được để trống';
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
     setError('');
     setLoading(true);
 
@@ -53,16 +43,10 @@ export default function Login() {
               <input
                 type="text"
                 placeholder="Nhập tên đăng nhập"
-                className={`w-full h-11 px-3 rounded-lg border bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors ${
-                  formErrors.username ? 'border-danger' : 'border-divider'
-                }`}
+                className="w-full h-11 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 value={username}
-                onChange={(e) => {
-                  setUsername(e.target.value);
-                  if (formErrors.username) setFormErrors((prev) => ({ ...prev, username: undefined }));
-                }}
+                onChange={(e) => setUsername(e.target.value)}
               />
-              {formErrors.username && <p className="text-xs text-danger mt-1">{formErrors.username}</p>}
             </div>
 
             <div className="mb-5">
@@ -72,16 +56,10 @@ export default function Login() {
               <input
                 type="password"
                 placeholder="Nhập mật khẩu"
-                className={`w-full h-11 px-3 rounded-lg border bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors ${
-                  formErrors.password ? 'border-danger' : 'border-divider'
-                }`}
+                className="w-full h-11 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (formErrors.password) setFormErrors((prev) => ({ ...prev, password: undefined }));
-                }}
+                onChange={(e) => setPassword(e.target.value)}
               />
-              {formErrors.password && <p className="text-xs text-danger mt-1">{formErrors.password}</p>}
             </div>
 
             {error && (
