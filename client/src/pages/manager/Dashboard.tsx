@@ -32,7 +32,7 @@ export default function ManagerDashboard() {
     api.get('/orders').then((res) => {
       const orders: Order[] = res.data.orders || [];
       setStats({
-        totalOrders: orders.length,
+        totalOrders: orders.filter((o) => o.status !== 'cancelled').length,
         totalRevenue: orders.filter((o) => o.status === 'completed').reduce((s, o) => s + o.totalAmount, 0),
         pendingOrders: orders.filter((o) => o.status === 'pending').length,
         completedOrders: orders.filter((o) => o.status === 'completed').length,
