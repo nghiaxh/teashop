@@ -67,7 +67,10 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    const itemTotal = product.price * item.quantity;
+    const toppingTotal = (item.toppings || []).reduce(
+      (sum, t) => sum + t.price * (t.quantity || 1), 0
+    );
+    const itemTotal = product.price * item.quantity + toppingTotal;
     orderItems.push({
       product: product._id,
       productName: product.name,
