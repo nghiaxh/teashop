@@ -4,6 +4,7 @@ import Product from '../models/Product';
 import { requireAuth, requireManager, AuthRequest } from '../middleware/auth';
 import { calculateOrderTotal } from '../utils/calculateOrderTotal';
 import { updateInventoryOnOrder } from '../utils/updateInventoryOnOrder';
+import { restoreInventoryOnOrder } from '../utils/restoreInventoryOnOrder';
 
 const router = Router();
 
@@ -106,16 +107,23 @@ router.put('/:id/status', requireAuth, requireManager, async (req: AuthRequest, 
     return;
   }
 
-  const order = await Order.findByIdAndUpdate(
-    req.params.id,
-    { status },
-    { new: true }
-  );
-
+  const order = await Order.findById(req.params.id);
   if (!order) {
     res.status(404).json({ error: 'Không tìm thấy đơn hàng' });
     return;
   }
+
+  if (order.status === 'cancelled') {
+    res.status(400).json({ error: 'Đơn hàng đã bị hủy' });
+    return;
+  }
+
+  if (status === 'cancelled') {
+    await restoreInventoryOnOrder(order);
+  }
+
+  order.status = status;
+  await order.save();
 
   res.json({ order });
 });
