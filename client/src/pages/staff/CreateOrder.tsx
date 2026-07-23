@@ -188,8 +188,18 @@ export default function CreateOrder() {
               className="bg-content1 rounded-xl border border-divider p-3 cursor-pointer hover:border-primary/40 hover:shadow-sm hover:shadow-primary/[0.04] active:scale-[0.98] transition-all duration-150"
               onClick={() => handleProductClick(product)}
             >
-              <div className="w-full aspect-square bg-content2 rounded-lg flex items-center justify-center mb-2">
-                <Coffee size={28} className="text-primary/40" />
+              <div className="w-full aspect-square bg-content2 rounded-lg overflow-hidden mb-2 relative">
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ) : null}
+                <div className={`absolute inset-0 flex items-center justify-center ${product.image ? 'hidden' : ''}`}>
+                  <Coffee size={28} className="text-primary/40" />
+                </div>
               </div>
               <h3 className="text-sm font-medium text-foreground truncate">{product.name}</h3>
               <p className="text-sm font-semibold text-primary">

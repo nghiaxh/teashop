@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Button, Chip, Spinner } from '@heroui/react';
-import { Plus, Pencil, Trash, Package } from '@phosphor-icons/react';
+import { Plus, Pencil, Trash, Package, Image } from '@phosphor-icons/react';
 import api from '../../api/axios';
 import type { Product } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
@@ -30,7 +30,7 @@ export default function MenuManagement() {
   const [loading, setLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [formData, setFormData] = useState({ name: '', category: 'tra-sua' as string, price: 0 });
+  const [formData, setFormData] = useState({ name: '', category: 'tra-sua' as string, price: 0, image: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; price?: string }>({});
   const { showToast } = useToast();
 
@@ -84,14 +84,14 @@ export default function MenuManagement() {
 
   const startEdit = (product: Product) => {
     setEditingProduct(product);
-    setFormData({ name: product.name, category: product.category, price: product.price });
+    setFormData({ name: product.name, category: product.category, price: product.price, image: product.image || '' });
     setFormErrors({});
   };
 
   const closeModal = () => {
     setEditingProduct(null);
     setIsCreating(false);
-    setFormData({ name: '', category: 'tra-sua', price: 0 });
+    setFormData({ name: '', category: 'tra-sua', price: 0, image: '' });
     setFormErrors({});
   };
 
@@ -131,6 +131,7 @@ export default function MenuManagement() {
                 <thead>
                   <tr className="border-b border-divider">
                     <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Tên</th>
+                    <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Ảnh</th>
                     <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Danh mục</th>
                     <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Giá</th>
                     <th scope="col" className="text-left px-4 py-3 text-foreground/60 font-medium">Trạng thái</th>
@@ -145,6 +146,15 @@ export default function MenuManagement() {
                       className="border-b border-divider/50 last:border-b-0 hover:bg-content2/50 transition-colors"
                     >
                       <td className="px-4 py-3 font-medium">{product.name}</td>
+                      <td className="px-4 py-3">
+                        {product.image ? (
+                          <img src={product.image} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-content2 flex items-center justify-center">
+                            <Image size={16} className="text-foreground/30" />
+                          </div>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
                         <Chip size="sm" variant="soft" color="default">
                           {categoryLabels[product.category] || product.category}
@@ -228,6 +238,28 @@ export default function MenuManagement() {
               onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
             />
             {formErrors.price && <p className="text-xs text-danger mt-1">{formErrors.price}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-1.5">
+              Ảnh sản phẩm (URL)
+            </label>
+            <input
+              type="text"
+              className="w-full h-10 px-3 rounded-lg border border-divider bg-white text-foreground placeholder-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+              placeholder="https://..."
+              value={formData.image}
+              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+            />
+            {formData.image && (
+              <img
+                src={formData.image}
+                alt="Preview"
+                className="mt-2 w-16 h-16 rounded-lg object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'block'; }}
+              />
+            )}
           </div>
         </div>
       </Modal>

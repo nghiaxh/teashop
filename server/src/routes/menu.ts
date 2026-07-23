@@ -22,7 +22,7 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
 });
 
 router.post('/', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { name, category, price } = req.body;
+  const { name, category, price, image } = req.body;
 
   if (!name || typeof name !== 'string' || !name.trim()) {
     res.status(400).json({ error: 'Tên sản phẩm không được để trống' });
@@ -40,12 +40,12 @@ router.post('/', requireAuth, requireManager, async (req: AuthRequest, res: Resp
     return;
   }
 
-  const product = await Product.create({ name: name.trim(), category, price });
+  const product = await Product.create({ name: name.trim(), category, price, image: image || '' });
   res.status(201).json({ product });
 });
 
 router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { name, category, price } = req.body;
+  const { name, category, price, image } = req.body;
   const update: Record<string, any> = {};
 
   if (name !== undefined) {
@@ -72,6 +72,8 @@ router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Re
     }
     update.price = price;
   }
+
+  if (image !== undefined) update.image = image || '';
 
   const product = await Product.findByIdAndUpdate(
     req.params.id,

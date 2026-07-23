@@ -112,7 +112,7 @@ export default function ManagerDashboard() {
         <h2 className="text-lg font-semibold tracking-tight mb-4">Truy cập nhanh</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {navLinks.map((link) => (
-            <Card key={link.to} className="p-4 hover:border-primary/50 transition-colors">
+            <Card key={link.to} className="p-4 hover:border-primary/50 transition-colors cursor-pointer">
               <Link to={link.to} className="flex items-center gap-3 w-full h-auto py-1">
                 <link.icon size={18} weight="light" />
                 <span className="font-medium text-sm">{link.label}</span>

@@ -10,7 +10,7 @@ export default function DashboardLayout() {
     <div className="flex min-h-screen bg-background">
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden cursor-pointer"
           onClick={() => setSidebarOpen(false)}
         />
       )}
