@@ -68,6 +68,11 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    if (!product.isActive) {
+      res.status(400).json({ error: `Sản phẩm "${product.name}" đã ngừng bán` });
+      return;
+    }
+
     const toppingTotal = (item.toppings || []).reduce(
       (sum, t) => sum + t.price * (t.quantity || 1), 0
     );

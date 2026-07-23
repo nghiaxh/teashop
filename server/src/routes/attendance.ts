@@ -59,6 +59,11 @@ router.post('/check-out', requireAuth, async (req: AuthRequest, res: Response): 
     return;
   }
 
+  if (!attendance.checkIn) {
+    res.status(500).json({ error: 'Bản ghi thiếu giờ vào ca' });
+    return;
+  }
+
   attendance.checkOut = now;
   attendance.hoursWorked = Math.round(
     (now.getTime() - attendance.checkIn.getTime()) / (1000 * 60 * 60) * 10
@@ -136,6 +141,14 @@ router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Re
           (co.getTime() - ci.getTime()) / (1000 * 60 * 60) * 10
         ) / 10;
       }
+    }
+  }
+
+  if (update.checkIn) {
+    const existing = await Attendance.findById(req.params.id);
+    const shift = update.shift || existing?.shift;
+    if (shift) {
+      update.isLate = isLateCheckIn(update.checkIn, shift);
     }
   }
 

@@ -80,7 +80,7 @@ export default function Reports() {
           existing.count += it.quantity;
           existing.revenue += it.itemTotal;
         } else {
-          productMap.set(key, { name: it.name || it.productName, count: it.quantity, revenue: it.itemTotal });
+          productMap.set(key, { name: it.productName, count: it.quantity, revenue: it.itemTotal });
         }
       }
     }

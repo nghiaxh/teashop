@@ -21,12 +21,6 @@ export const requireAuth = async (
     return;
   }
 
-  if (req.session.cachedUser) {
-    req.user = req.session.cachedUser;
-    next();
-    return;
-  }
-
   const user = await User.findById(req.session.userId).select('-password');
   if (!user || !user.isActive) {
     res.status(401).json({ error: 'Không tìm thấy người dùng hoặc đã bị khóa' });
@@ -39,8 +33,6 @@ export const requireAuth = async (
     name: user.name,
     role: user.role
   };
-
-  req.session.cachedUser = req.user;
 
   next();
 };

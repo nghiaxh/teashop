@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Card, Spinner } from '@heroui/react';
 import { BookOpen, Package, Users, CalendarCheck, ChartBar, ShoppingBag, CurrencyDollar, Clock, CheckCircle } from '@phosphor-icons/react';
 import api from '../../api/axios';
+import { useToast } from '../../contexts/ToastContext';
 import type { Order } from '../../types';
 
 const container = {
@@ -27,6 +28,7 @@ const navLinks = [
 export default function ManagerDashboard() {
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, pendingOrders: 0, completedOrders: 0 });
   const [loading, setLoading] = useState(true);
+  const { showToast } = useToast();
 
   useEffect(() => {
     api.get('/orders').then((res) => {
@@ -38,7 +40,10 @@ export default function ManagerDashboard() {
         completedOrders: orders.filter((o) => o.status === 'completed').length,
       });
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(() => {
+      showToast('Không thể tải dữ liệu', 'error');
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {

@@ -102,4 +102,18 @@ router.delete('/:id', requireAuth, requireManager, async (req: AuthRequest, res:
   res.json({ message: 'Đã xóa sản phẩm' });
 });
 
+router.put('/:id/toggle', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    res.status(404).json({ error: 'Không tìm thấy sản phẩm' });
+    return;
+  }
+
+  product.isActive = !product.isActive;
+  await product.save();
+
+  res.json({ product });
+});
+
 export default router;
