@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Spinner } from '@heroui/react';
-import { ShoppingBag, CurrencyDollar, TrendUp, CheckCircle, XCircle, Funnel } from '@phosphor-icons/react';
+import { ShoppingBag, CurrencyDollar, TrendUp, CheckCircle, XCircle } from '@phosphor-icons/react';
 import api from '../../api/axios';
 import type { Order } from '../../types';
 
