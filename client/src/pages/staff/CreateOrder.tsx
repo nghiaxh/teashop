@@ -5,6 +5,7 @@ import { useToast } from '../../contexts/ToastContext';
 import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { Trash, Pencil, Coffee, MagnifyingGlass } from '@phosphor-icons/react';
 import { Spinner } from '@heroui/react';
 
@@ -42,6 +43,7 @@ export default function CreateOrder() {
   const [submitting, setSubmitting] = useState(false);
   const [editingCartIndex, setEditingCartIndex] = useState<number | null>(null);
   const [orderNote, setOrderNote] = useState('');
+  const [showOrderConfirm, setShowOrderConfirm] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => { fetchProducts(); }, []);
@@ -281,7 +283,7 @@ export default function CreateOrder() {
             </div>
             <button
               className="w-full h-10 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 flex items-center justify-center"
-              onClick={handleCreateOrder}
+              onClick={() => setShowOrderConfirm(true)}
               disabled={cart.length === 0 || submitting}
             >
               {submitting ? <Spinner size="sm" color="current" /> : 'Tạo đơn'}
@@ -411,6 +413,16 @@ export default function CreateOrder() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={showOrderConfirm}
+        onClose={() => setShowOrderConfirm(false)}
+        onConfirm={() => { setShowOrderConfirm(false); handleCreateOrder(); }}
+        title="Xác nhận tạo đơn"
+        message={`${cart.length} món — Tổng: ${totalAmount.toLocaleString('vi-VN')}đ`}
+        confirmLabel="Tạo đơn"
+        confirmColor="bg-primary text-white hover:bg-primary/90"
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import api from '../../api/axios';
 import type { User } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 
 const container = {
   hidden: { opacity: 0 },
@@ -25,6 +26,7 @@ export default function AccountManagement() {
   const [formData, setFormData] = useState({ username: '', password: '', name: '', role: 'staff' as 'staff' | 'manager', phone: '', email: '', gender: '' as '' | 'male' | 'female' | 'other', dateOfBirth: '', hireDate: '' });
   const [editData, setEditData] = useState({ name: '', role: 'staff' as 'staff' | 'manager', phone: '', email: '', gender: '' as '' | 'male' | 'female' | 'other', dateOfBirth: '', hireDate: '' });
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string; name?: string }>({});
+  const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => { fetchUsers(); }, []);
@@ -191,7 +193,7 @@ export default function AccountManagement() {
                             isIconOnly
                             size="sm"
                             variant="danger-soft"
-                            onClick={() => handleDeactivate(user)}
+                            onClick={() => setDeactivatingUser(user)}
                             aria-label="Khóa"
                             isDisabled={user.role === 'manager'}
                             className={user.role === 'manager' ? 'opacity-50' : ''}
@@ -422,6 +424,15 @@ export default function AccountManagement() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deactivatingUser}
+        onClose={() => setDeactivatingUser(null)}
+        onConfirm={() => { if (deactivatingUser) handleDeactivate(deactivatingUser); }}
+        title="Khóa tài khoản"
+        message={`Bạn có chắc muốn khóa tài khoản "${deactivatingUser?.name}"?`}
+        confirmLabel="Khóa"
+      />
     </div>
   );
 }
