@@ -40,16 +40,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 const typeClasses: Record<ToastType, string> = {
-  success: 'bg-success/10 text-success border-success/20',
-  error: 'bg-danger/10 text-danger border-danger/20',
-  warning: 'bg-warning/10 text-warning border-warning/20',
-  info: 'bg-info/10 text-info border-info/20',
+  success: 'bg-success text-white border-success/50',
+  error: 'bg-danger text-white border-danger/50',
+  warning: 'bg-warning text-white border-warning/50',
+  info: 'bg-info text-white border-info/50',
 };
 
 function ToastItem({ toast }: { toast: Toast }) {
   return (
     <div
-      className={`pointer-events-auto px-4 py-3 rounded-xl border shadow-lg text-sm font-medium backdrop-blur-sm ${typeClasses[toast.type]}`}
+      className={`pointer-events-auto px-4 py-3 rounded-xl border shadow-lg text-sm font-medium ${typeClasses[toast.type]}`}
       style={{ animation: 'toast-in 200ms ease-out' }}
     >
       {toast.message}
