@@ -9,19 +9,24 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    res.status(400).json({ error: 'Đăng nhập thất bại' });
+    res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập và mật khẩu' });
     return;
   }
 
   const user = await User.findOne({ username });
   if (!user) {
-    res.status(401).json({ error: 'Đăng nhập thất bại' });
+    res.status(401).json({ error: 'Sai tên đăng nhập hoặc mật khẩu' });
+    return;
+  }
+
+  if (!user.isActive) {
+    res.status(403).json({ error: 'Tài khoản đã bị khóa' });
     return;
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    res.status(401).json({ error: 'Đăng nhập thất bại' });
+    res.status(401).json({ error: 'Sai tên đăng nhập hoặc mật khẩu' });
     return;
   }
 
