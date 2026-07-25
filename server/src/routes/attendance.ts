@@ -74,7 +74,10 @@ router.post('/check-out', requireAuth, async (req: AuthRequest, res: Response): 
 });
 
 router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { userId, month, year } = req.query;
+  const { userId, month, year, page = '1', limit = '20' } = req.query;
+  const pageNum = parseInt(page as string);
+  const limitNum = parseInt(limit as string);
+  const skip = (pageNum - 1) * limitNum;
 
   const filter: any = {};
 
@@ -90,11 +93,17 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
     filter.date = { $gte: startDate, $lte: endDate };
   }
 
-  const attendances = await Attendance.find(filter)
-    .populate('userId', 'name username')
-    .sort({ date: -1, checkIn: -1 });
+  const [attendances, total] = await Promise.all([
+    Attendance.find(filter).skip(skip).limit(limitNum).populate('userId', 'name username').sort({ date: -1, checkIn: -1 }),
+    Attendance.countDocuments(filter),
+  ]);
 
-  res.json({ attendances });
+  res.json({
+    attendances,
+    total,
+    page: pageNum,
+    totalPages: Math.ceil(total / limitNum),
+  });
 });
 
 router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
@@ -127,26 +136,23 @@ router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Re
     update.shift = shift;
   }
 
-  if (update.checkIn && update.checkOut) {
+  const existingRecord = await Attendance.findById(req.params.id);
+  const finalCheckIn = update.checkIn || existingRecord?.checkIn;
+  const finalCheckOut = update.checkOut || existingRecord?.checkOut;
+
+  if (finalCheckIn && finalCheckOut && finalCheckOut <= finalCheckIn) {
+    res.status(400).json({ error: 'Giờ ra phải sau giờ vào ca' });
+    return;
+  }
+
+  if (finalCheckIn && finalCheckOut) {
     update.hoursWorked = Math.round(
-      (update.checkOut.getTime() - update.checkIn.getTime()) / (1000 * 60 * 60) * 10
+      (finalCheckOut.getTime() - finalCheckIn.getTime()) / (1000 * 60 * 60) * 10
     ) / 10;
-  } else if (update.checkIn || update.checkOut) {
-    const existing = await Attendance.findById(req.params.id);
-    if (existing) {
-      const ci = update.checkIn || existing.checkIn;
-      const co = update.checkOut || existing.checkOut;
-      if (ci && co) {
-        update.hoursWorked = Math.round(
-          (co.getTime() - ci.getTime()) / (1000 * 60 * 60) * 10
-        ) / 10;
-      }
-    }
   }
 
   if (update.checkIn) {
-    const existing = await Attendance.findById(req.params.id);
-    const shift = update.shift || existing?.shift;
+    const shift = update.shift || existingRecord?.shift;
     if (shift) {
       update.isLate = isLateCheckIn(update.checkIn, shift);
     }
