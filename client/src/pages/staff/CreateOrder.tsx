@@ -77,7 +77,8 @@ export default function CreateOrder() {
   const handleAddToCart = () => {
     if (!selectedProduct) return;
 
-    const basePrice = selectedProduct.price * orderQuantity;
+    const multiplier = selectedProduct.sizeMultipliers?.[orderSize] || 1.0;
+    const basePrice = selectedProduct.price * multiplier * orderQuantity;
     const toppingPrice = orderToppings.reduce((sum, t) => sum + t.price, 0);
     const itemTotal = basePrice + toppingPrice;
 
