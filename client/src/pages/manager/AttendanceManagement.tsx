@@ -6,6 +6,8 @@ import api from '../../api/axios';
 import type { Attendance } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const container = {
   hidden: { opacity: 0 },
@@ -22,14 +24,17 @@ export default function AttendanceManagement() {
   const [loading, setLoading] = useState(true);
   const [editingAttendance, setEditingAttendance] = useState<Attendance | null>(null);
   const [editData, setEditData] = useState({ checkIn: '', checkOut: '', shift: 'morning' as 'morning' | 'afternoon' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { showToast } = useToast();
+  const limit = 20;
 
-  useEffect(() => { fetchAttendances(); }, []);
-
-  const fetchAttendances = async () => {
+  const fetchAttendances = async (page: number) => {
+    setLoading(true);
     try {
-      const res = await api.get('/attendance');
+      const res = await api.get(`/attendance?page=${page}&limit=${limit}`);
       setAttendances(res.data.attendances);
+      setTotalPages(res.data.totalPages || 1);
     } catch {
       showToast('Không thể tải dữ liệu chấm công', 'error');
     } finally {
@@ -37,11 +42,13 @@ export default function AttendanceManagement() {
     }
   };
 
+  useEffect(() => { fetchAttendances(currentPage); }, [currentPage]);
+
   const handleUpdate = async () => {
     if (!editingAttendance) return;
     try {
       await api.put(`/attendance/${editingAttendance._id}`, editData);
-      fetchAttendances();
+      fetchAttendances(currentPage);
       setEditingAttendance(null);
       showToast('Cập nhật thành công', 'success');
     } catch (error: any) {
@@ -62,6 +69,8 @@ export default function AttendanceManagement() {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   };
+
+  const { paginationRange, goToPage, goToNextPage, goToPreviousPage, hasNextPage, hasPreviousPage } = usePagination({ totalItems: totalPages * limit, itemsPerPage: limit });
 
   if (loading) {
     return (
@@ -132,6 +141,17 @@ export default function AttendanceManagement() {
           </Card>
         </motion.div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginationRange={paginationRange}
+        onPageChange={(p) => { goToPage(p); setCurrentPage(p); }}
+        onPrevious={() => { goToPreviousPage(); setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+        onNext={() => { goToNextPage(); setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+        hasNext={hasNextPage}
+        hasPrevious={hasPreviousPage}
+      />
 
       <Modal
         open={!!editingAttendance}

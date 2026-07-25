@@ -7,6 +7,8 @@ import type { Product } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const categoryLabels: Record<string, string> = {
   'tra-sua': 'Trà Sữa',
@@ -34,14 +36,17 @@ export default function MenuManagement() {
   const [formData, setFormData] = useState({ name: '', category: 'tra-sua' as string, price: 0, image: '' });
   const [formErrors, setFormErrors] = useState<{ name?: string; price?: string }>({});
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [totalItems, setTotalItems] = useState(0);
   const { showToast } = useToast();
+  const { currentPage, totalPages, paginationRange, goToPage, goToNextPage, goToPreviousPage, hasNextPage, hasPreviousPage } = usePagination({ totalItems, itemsPerPage: 20 });
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { fetchProducts(); }, [currentPage]);
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get('/menu');
+      const res = await api.get('/menu', { params: { page: currentPage, limit: 20 } });
       setProducts(res.data.products);
+      setTotalItems(res.data.total || 0);
     } catch {
       showToast('Không thể tải danh sách sản phẩm', 'error');
     } finally {
@@ -186,6 +191,17 @@ export default function MenuManagement() {
           </Card>
         </motion.div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginationRange={paginationRange}
+        onPageChange={goToPage}
+        onPrevious={goToPreviousPage}
+        onNext={goToNextPage}
+        hasNext={hasNextPage}
+        hasPrevious={hasPreviousPage}
+      />
 
       <Modal
         open={modalOpen}

@@ -5,7 +5,7 @@ import { requireAuth, requireManager, AuthRequest } from '../middleware/auth';
 const router = Router();
 
 router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { category, search } = req.query;
+  const { category, search, page, limit } = req.query;
 
   const filter: any = { isActive: true };
 
@@ -17,8 +17,21 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
     filter.name = { $regex: search, $options: 'i' };
   }
 
-  const products = await Product.find(filter).sort({ category: 1, name: 1 });
-  res.json({ products });
+  if (page) {
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [products, total] = await Promise.all([
+      Product.find(filter).skip(skip).limit(limitNum).sort({ category: 1, name: 1 }),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json({ products, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } else {
+    const products = await Product.find(filter).sort({ category: 1, name: 1 });
+    res.json({ products });
+  }
 });
 
 router.post('/', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {

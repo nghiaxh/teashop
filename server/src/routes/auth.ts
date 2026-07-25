@@ -78,8 +78,23 @@ router.get('/profile', requireAuth, async (req: AuthRequest, res: Response): Pro
 });
 
 router.get('/users', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {
-  const users = await User.find().select('-password').sort({ createdAt: -1 });
-  res.json({ users });
+  const { page, limit } = req.query;
+
+  if (page) {
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [users, total] = await Promise.all([
+      User.find().select('-password').skip(skip).limit(limitNum).sort({ createdAt: -1 }),
+      User.countDocuments(),
+    ]);
+
+    res.json({ users, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } else {
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json({ users });
+  }
 });
 
 router.put('/:id', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {

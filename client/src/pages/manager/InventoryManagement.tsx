@@ -6,6 +6,8 @@ import api from '../../api/axios';
 import type { Ingredient } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const container = {
   hidden: { opacity: 0 },
@@ -24,14 +26,17 @@ export default function InventoryManagement() {
   const [isCreating, setIsCreating] = useState(false);
   const [formData, setFormData] = useState({ name: '', unit: 'g', quantity: 0, reorderLevel: 0 });
   const [formErrors, setFormErrors] = useState<{ name?: string; quantity?: string; reorderLevel?: string }>({});
+  const [totalItems, setTotalItems] = useState(0);
   const { showToast } = useToast();
+  const { currentPage, totalPages, paginationRange, goToPage, goToNextPage, goToPreviousPage, hasNextPage, hasPreviousPage } = usePagination({ totalItems, itemsPerPage: 20 });
 
-  useEffect(() => { fetchIngredients(); }, []);
+  useEffect(() => { fetchIngredients(); }, [currentPage]);
 
   const fetchIngredients = async () => {
     try {
-      const res = await api.get('/inventory');
+      const res = await api.get('/inventory', { params: { page: currentPage, limit: 20 } });
       setIngredients(res.data.ingredients);
+      setTotalItems(res.data.total || 0);
     } catch {
       showToast('Không thể tải danh sách nguyên liệu', 'error');
     } finally {
@@ -175,6 +180,17 @@ export default function InventoryManagement() {
           </Card>
         </motion.div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginationRange={paginationRange}
+        onPageChange={goToPage}
+        onPrevious={goToPreviousPage}
+        onNext={goToNextPage}
+        hasNext={hasNextPage}
+        hasPrevious={hasPreviousPage}
+      />
 
       <Modal
         open={modalOpen}

@@ -4,6 +4,8 @@ import type { Order } from '../../types';
 import Badge from '../../components/ui/Badge';
 import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import Modal from '../../components/ui/Modal';
 import { Eye } from '@phosphor-icons/react';
 import { Button } from '@heroui/react';
@@ -19,20 +21,24 @@ export default function OrderHistory() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
-  useEffect(() => { fetchOrders(); }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = async (page: number) => {
     setLoading(true);
     try {
-      const res = await api.get('/orders');
+      const res = await api.get(`/orders?page=${page}&limit=${limit}`);
       setOrders(res.data.orders);
+      setTotalPages(res.data.totalPages || 1);
     } catch (error) {
       console.error('Failed to fetch orders:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => { fetchOrders(currentPage); }, [currentPage]);
 
   const fetchOrderDetail = async (orderId: string) => {
     setDetailLoading(true);
@@ -45,6 +51,8 @@ export default function OrderHistory() {
       setDetailLoading(false);
     }
   };
+
+  const { paginationRange, goToPage, goToNextPage, goToPreviousPage, hasNextPage, hasPreviousPage } = usePagination({ totalItems: totalPages * limit, itemsPerPage: limit });
 
   if (loading) return <LoadingState />;
 
@@ -76,7 +84,7 @@ export default function OrderHistory() {
               <tbody>
                 {orders.map((order, index) => (
                   <tr key={order._id} className="border-b border-divider/50 last:border-b-0 hover:bg-content2/50 transition-colors">
-                    <td className="px-4 py-3 text-foreground/50">{index + 1}</td>
+                    <td className="px-4 py-3 text-foreground/50">{(currentPage - 1) * limit + index + 1}</td>
                     <td className="px-4 py-3">
                       {order.items.map((item, i) => (
                         <div key={i} className="text-sm">{item.quantity}x {item.productName}</div>
@@ -124,6 +132,17 @@ export default function OrderHistory() {
           </div>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginationRange={paginationRange}
+        onPageChange={(p) => { goToPage(p); setCurrentPage(p); }}
+        onPrevious={() => { goToPreviousPage(); setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+        onNext={() => { goToNextPage(); setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+        hasNext={hasNextPage}
+        hasPrevious={hasPreviousPage}
+      />
 
       <Modal
         open={!!selectedOrder || detailLoading}
