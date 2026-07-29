@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import api from '../../api/axios';
 import type { Attendance } from '../../types';
 import { useToast } from '../../contexts/ToastContext';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import { List } from '@phosphor-icons/react';
 import Sidebar from './Sidebar';
 
