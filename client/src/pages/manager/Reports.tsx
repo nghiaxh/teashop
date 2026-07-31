@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Card, Spinner } from '@heroui/react';
-import { ShoppingBag, CurrencyDollar, TrendUp, CheckCircle, XCircle } from '@phosphor-icons/react';
+import { Card, Spinner, Button } from '@heroui/react';
+import { ShoppingBag, CurrencyDollar, TrendUp, CheckCircle, XCircle, Download } from '@phosphor-icons/react';
+import * as XLSX from 'xlsx';
 import api from '../../api/axios';
 import type { Order } from '../../types';
 
@@ -30,7 +31,7 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
 
   useEffect(() => {
-    api.get('/orders').then((res) => {
+    api.get('/orders?limit=9999').then((res) => {
       setOrders(res.data.orders || []);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -101,6 +102,41 @@ export default function Reports() {
     ? Math.round((stats.completedOrders / stats.totalOrders) * 100)
     : 0;
 
+  const exportToExcel = () => {
+    const data = filteredOrders.map((o, i) => ({
+      'STT': i + 1,
+      'Ngày': new Date(o.createdAt).toLocaleDateString('vi-VN'),
+      'Nhân viên': o.userId?.name || '',
+      'Trạng thái': o.status === 'completed' ? 'Hoàn thành' : o.status === 'pending' ? 'Đang chờ' : 'Đã hủy',
+      'Số lượng món': o.items.reduce((s, it) => s + it.quantity, 0),
+      'Tổng tiền': o.totalAmount,
+    }));
+
+    data.push({
+      'STT': '' as any,
+      'Ngày': '' as any,
+      'Nhân viên': '' as any,
+      'Trạng thái': 'TỔNG CỘNG' as any,
+      'Số lượng món': data.reduce((s, r) => s + (r['Số lượng món'] as number), 0) as any,
+      'Tổng tiền': stats.totalRevenue as any,
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Báo cáo doanh thu');
+
+    ws['!cols'] = [
+      { wch: 5 },
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 15 },
+    ];
+
+    XLSX.writeFile(wb, `bao-cao-doanh-thu-${dateFilter}.xlsx`);
+  };
+
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item} className="flex items-center justify-between">
@@ -119,6 +155,13 @@ export default function Reports() {
               {dateFilterLabels[key]}
             </button>
           ))}
+          <Button
+            variant="primary"
+            onClick={exportToExcel}
+          >
+            <Download size={16} />
+            Xuất Excel
+          </Button>
         </div>
       </motion.div>
 
