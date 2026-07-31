@@ -4,18 +4,23 @@ import type { Attendance } from '../../types';
 import Badge from '../../components/ui/Badge';
 import LoadingState from '../../components/ui/LoadingState';
 import EmptyState from '../../components/ui/EmptyState';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 import { Clock } from '@phosphor-icons/react';
 
 export default function AttendanceHistory() {
   const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 20;
 
-  useEffect(() => { fetchAttendances(); }, []);
-
-  const fetchAttendances = async () => {
+  const fetchAttendances = async (page: number) => {
+    setLoading(true);
     try {
-      const res = await api.get('/attendance');
+      const res = await api.get(`/attendance?page=${page}&limit=${limit}`);
       setAttendances(res.data.attendances);
+      setTotalPages(res.data.totalPages || 1);
     } catch (error) {
       console.error('Failed to fetch attendances:', error);
     } finally {
@@ -23,12 +28,16 @@ export default function AttendanceHistory() {
     }
   };
 
+  useEffect(() => { fetchAttendances(currentPage); }, [currentPage]);
+
   const formatTime = (dateStr: string | null) => {
     if (!dateStr) return '-';
     return new Date(dateStr).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
   };
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('vi-VN');
+
+  const { paginationRange, goToPage, goToNextPage, goToPreviousPage, hasNextPage, hasPreviousPage } = usePagination({ totalItems: totalPages * limit, itemsPerPage: limit });
 
   if (loading) return <LoadingState />;
 
@@ -76,6 +85,17 @@ export default function AttendanceHistory() {
           </div>
         </div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginationRange={paginationRange}
+        onPageChange={(p) => { goToPage(p); setCurrentPage(p); }}
+        onPrevious={() => { goToPreviousPage(); setCurrentPage((prev) => Math.max(1, prev - 1)); }}
+        onNext={() => { goToNextPage(); setCurrentPage((prev) => Math.min(totalPages, prev + 1)); }}
+        hasNext={hasNextPage}
+        hasPrevious={hasPreviousPage}
+      />
     </div>
   );
 }
