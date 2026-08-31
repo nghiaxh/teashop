@@ -10,6 +10,9 @@ const router = Router();
 
 router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   const { page = '1', limit = '20', status, date } = req.query;
+  const pageNum = parseInt(page as string);
+  const limitNum = parseInt(limit as string);
+  const skip = (pageNum - 1) * limitNum;
 
   const filter: any = {};
 
@@ -28,11 +31,17 @@ router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<vo
     filter.createdAt = { $gte: startDate, $lt: endDate };
   }
 
-  const orders = await Order.find(filter)
-    .sort({ createdAt: -1 })
-    .populate('userId', 'name username');
+  const [orders, total] = await Promise.all([
+    Order.find(filter).skip(skip).limit(limitNum).sort({ createdAt: -1 }).populate('userId', 'name username'),
+    Order.countDocuments(filter),
+  ]);
 
-  res.json({ orders });
+  res.json({
+    orders,
+    total,
+    page: pageNum,
+    totalPages: Math.ceil(total / limitNum),
+  });
 });
 
 router.get('/:id', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
@@ -73,10 +82,11 @@ router.post('/', requireAuth, async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
+    const multiplier = product.sizeMultipliers?.[item.size as keyof typeof product.sizeMultipliers] || 1.0;
     const toppingTotal = (item.toppings || []).reduce(
       (sum: number, t: { price: number; quantity?: number }) => sum + t.price * (t.quantity || 1), 0
     );
-    const itemTotal = product.price * item.quantity + toppingTotal;
+    const itemTotal = product.price * multiplier * item.quantity + toppingTotal;
     orderItems.push({
       product: product._id,
       productName: product.name,

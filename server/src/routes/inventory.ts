@@ -6,8 +6,23 @@ import { requireAuth, requireManager, AuthRequest } from '../middleware/auth';
 const router = Router();
 
 router.get('/', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
-  const ingredients = await Ingredient.find().sort({ name: 1 });
-  res.json({ ingredients });
+  const { page, limit } = req.query;
+
+  if (page) {
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const [ingredients, total] = await Promise.all([
+      Ingredient.find().skip(skip).limit(limitNum).sort({ name: 1 }),
+      Ingredient.countDocuments(),
+    ]);
+
+    res.json({ ingredients, total, page: pageNum, totalPages: Math.ceil(total / limitNum) });
+  } else {
+    const ingredients = await Ingredient.find().sort({ name: 1 });
+    res.json({ ingredients });
+  }
 });
 
 router.post('/', requireAuth, requireManager, async (req: AuthRequest, res: Response): Promise<void> => {

@@ -7,6 +7,8 @@ import type { User } from '../../types';
 import { useToast } from '../../contexts/ToastContext';
 import Modal from '../../components/ui/Modal';
 import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import Pagination from '../../components/Pagination';
+import { usePagination } from '../../hooks/usePagination';
 
 const container = {
   hidden: { opacity: 0 },
@@ -27,14 +29,17 @@ export default function AccountManagement() {
   const [editData, setEditData] = useState({ name: '', role: 'staff' as 'staff' | 'manager', phone: '', email: '', gender: '' as '' | 'male' | 'female' | 'other', dateOfBirth: '', hireDate: '' });
   const [formErrors, setFormErrors] = useState<{ username?: string; password?: string; name?: string }>({});
   const [deactivatingUser, setDeactivatingUser] = useState<User | null>(null);
+  const [totalItems, setTotalItems] = useState(0);
   const { showToast } = useToast();
+  const { currentPage, totalPages, paginationRange, goToPage, goToNextPage, goToPreviousPage, hasNextPage, hasPreviousPage } = usePagination({ totalItems, itemsPerPage: 20 });
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { fetchUsers(); }, [currentPage]);
 
   const fetchUsers = async () => {
     try {
-      const res = await api.get('/auth/users');
+      const res = await api.get('/auth/users', { params: { page: currentPage, limit: 20 } });
       setUsers(res.data.users || []);
+      setTotalItems(res.data.total || 0);
     } catch {
       showToast('Không thể tải danh sách nhân viên', 'error');
     } finally {
@@ -210,6 +215,17 @@ export default function AccountManagement() {
           </Card>
         </motion.div>
       )}
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        paginationRange={paginationRange}
+        onPageChange={goToPage}
+        onPrevious={goToPreviousPage}
+        onNext={goToNextPage}
+        hasNext={hasNextPage}
+        hasPrevious={hasPreviousPage}
+      />
 
       <Modal
         open={isCreating}
